@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+{% load store_tags %}
+
+{% block title %}Order Confirmed — VisionGear{% endblock %}
+
+{% block extra_css %}
+.success-wrap {
+    min-height: calc(100vh - 70px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 1rem;
+    background: radial-gradient(ellipse at 50% 0%, rgba(39,174,96,0.04) 0%, transparent 60%);
+}
+.success-card {
+    width: 100%;
+    max-width: 640px;
+    background: var(--charcoal);
+    border: 1px solid rgba(39,174,96,0.2);
+    border-radius: var(--radius);
+    padding: 3rem;
+    text-align: center;
+}
+.success-icon {
+    width: 80px; height: 80px;
+    background: rgba(39,174,96,0.1);
+    border: 2px solid rgba(39,174,96,0.3);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    color: var(--green);
+    margin: 0 auto 2rem;
+    animation: successPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+@keyframes successPop {
+    0% { transform: scale(0); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+.order-meta {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin: 2rem 0;
+    text-align: left;
+}
+.meta-item {
+    background: var(--graphite);
+    border: 1px solid var(--iron);
+    border-radius: var(--radius);
+    padding: 1rem;
+}
+.meta-label { font-size: 0.65rem; font-family: var(--font-mono); letter-spacing: 2px; text-transform: uppercase; color: var(--silver); margin-bottom: 0.4rem; }
+.meta-value { font-size: 0.9rem; color: var(--fog); font-weight: 500; }
+.order-items-list { text-align: left; border: 1px solid var(--iron); border-radius: var(--radius); overflow: hidden; margin: 1.5rem 0; }
+.order-item-row { display: flex; justify-content: space-between; padding: 0.85rem 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.85rem; }
+.order-item-row:last-child { border-bottom: none; }
+.order-item-row .item-name { color: var(--fog); }
+.order-item-row .item-price { color: var(--gold); font-family: var(--font-mono); }
+.status-timeline { display: flex; align-items: center; justify-content: center; gap: 0; margin: 2rem 0; }
+.timeline-step { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; flex: 1; position: relative; }
+.timeline-dot { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; z-index: 1; }
+.timeline-dot.active { background: rgba(39,174,96,0.2); border: 2px solid var(--green); color: var(--green); }
+.timeline-dot.inactive { background: var(--graphite); border: 2px solid var(--iron); color: var(--silver); }
+.timeline-label { font-size: 0.68rem; font-family: var(--font-mono); letter-spacing: 1px; text-transform: uppercase; color: var(--silver); text-align: center; }
+.timeline-line { flex: 1; height: 2px; background: var(--iron); margin: 0 -1px; margin-top: -1.75rem; }
+.timeline-line.active { background: rgba(39,174,96,0.3); }
+{% endblock %}
+
+{% block content %}
+<div class="success-wrap">
+    <div class="success-card">
+        <div class="success-icon"><i class="fas fa-check"></i></div>
+        <h1 style="font-family:var(--font-display);font-size:2.2rem;color:var(--white);margin-bottom:0.5rem;">Order Confirmed!</h1>
+        <p style="color:var(--silver);margin-bottom:0.5rem;">Thank you for your purchase. Your order has been placed successfully.</p>
+        <p style="font-family:var(--font-mono);font-size:0.85rem;color:var(--gold);">Order ID: #{{ order.short_id }}</p>
+
+        <!-- Status timeline -->
+        <div class="status-timeline">
+            <div class="timeline-step">
+                <div class="timeline-dot active"><i class="fas fa-check"></i></div>
+                <div class="timeline-label">Confirmed</div>
+            </div>
+            <div class="timeline-line active"></div>
+            <div class="timeline-step">
+                <div class="timeline-dot inactive"><i class="fas fa-cog"></i></div>
+                <div class="timeline-label">Processing</div>
+            </div>
+            <div class="timeline-line"></div>
+            <div class="timeline-step">
+                <div class="timeline-dot inactive"><i class="fas fa-truck"></i></div>
+                <div class="timeline-label">Shipped</div>
+            </div>
+            <div class="timeline-line"></div>
+            <div class="timeline-step">
+                <div class="timeline-dot inactive"><i class="fas fa-home"></i></div>
+                <div class="timeline-label">Delivered</div>
+            </div>
+        </div>
+
+        <!-- Order meta -->
+        <div class="order-meta">
+            <div class="meta-item">
+                <div class="meta-label">Order ID</div>
+                <div class="meta-value">#{{ order.short_id }}</div>
+            </div>
+            <div class="meta-item">
+                <div class="meta-label">Payment Status</div>
+                <div class="meta-value" style="color:var(--green);">✓ {{ order.get_payment_status_display }}</div>
+            </div>
+            <div class="meta-item">
+                <div class="meta-label">Total Amount</div>
+                <div class="meta-value" style="color:var(--gold);font-family:var(--font-mono);">₹{{ order.total }}</div>
+            </div>
+            <div class="meta-item">
+                <div class="meta-label">Delivery Address</div>
+                <div class="meta-value">{{ order.city }}, {{ order.state }}</div>
+            </div>
+        </div>
+
+        <!-- Items -->
+        <div class="order-items-list">
+            {% for item in order.items.all %}
+            <div class="order-item-row">
+                <span class="item-name">{{ item.product_name }} × {{ item.quantity }}</span>
+                <span class="item-price">₹{{ item.subtotal }}</span>
+            </div>
+            {% endfor %}
+            <div class="order-item-row" style="background:rgba(201,168,76,0.04);">
+                <span style="color:var(--white);font-weight:600;">Total</span>
+                <span style="color:var(--gold);font-family:var(--font-mono);font-weight:700;">₹{{ order.total }}</span>
+            </div>
+        </div>
+
+        <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;">
+            <a href="{% url 'orders:order_detail' order.order_id %}" class="btn btn-gold">
+                <i class="fas fa-box"></i> Track Order
+            </a>
+            <a href="{% url 'orders:invoice' order.order_id %}" class="btn btn-outline">
+                <i class="fas fa-file-invoice"></i> Download Invoice
+            </a>
+            <a href="{% url 'store:product_list' %}" class="btn btn-ghost">
+                <i class="fas fa-shopping-bag"></i> Continue Shopping
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

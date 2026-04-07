@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+
+{% block title %}My Orders — VisionGear{% endblock %}
+
+{% block extra_css %}
+.order-row {
+    background: var(--charcoal);
+    border: 1px solid var(--iron);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 1.5rem;
+    align-items: center;
+    transition: var(--transition);
+    text-decoration: none;
+}
+.order-row:hover { border-color: rgba(201,168,76,0.25); transform: translateY(-2px); }
+.order-id { font-family: var(--font-mono); font-size: 0.9rem; color: var(--gold); margin-bottom: 0.4rem; }
+.order-date { font-size: 0.78rem; color: var(--silver); margin-bottom: 0.75rem; }
+.order-items-preview { font-size: 0.82rem; color: var(--ash); }
+.status-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.3rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-family: var(--font-mono);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+.status-pending { background: rgba(232,160,32,0.12); color: var(--amber); border: 1px solid rgba(232,160,32,0.25); }
+.status-confirmed { background: rgba(52,152,219,0.12); color: #3498db; border: 1px solid rgba(52,152,219,0.25); }
+.status-processing { background: rgba(155,89,182,0.12); color: #9b59b6; border: 1px solid rgba(155,89,182,0.25); }
+.status-shipped { background: rgba(26,188,156,0.12); color: #1abc9c; border: 1px solid rgba(26,188,156,0.25); }
+.status-delivered { background: rgba(39,174,96,0.12); color: var(--green); border: 1px solid rgba(39,174,96,0.25); }
+.status-cancelled { background: rgba(192,57,43,0.12); color: #e74c3c; border: 1px solid rgba(192,57,43,0.25); }
+.status-refunded { background: rgba(127,140,141,0.12); color: #95a5a6; border: 1px solid rgba(127,140,141,0.25); }
+{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top:2rem;padding-bottom:5rem;">
+    <div class="page-header">
+        <div class="breadcrumb">
+            <a href="{% url 'store:home' %}">Home</a>
+            <span class="breadcrumb-sep">/</span>
+            <span class="breadcrumb-current">My Orders</span>
+        </div>
+        <h1 class="page-title">Order History</h1>
+    </div>
+
+    {% if orders %}
+    {% for order in orders %}
+    <a href="{% url 'orders:order_detail' order.order_id %}" class="order-row">
+        <div>
+            <div class="order-id">#{{ order.short_id }}</div>
+            <div class="order-date">{{ order.created_at|date:"F d, Y · g:i A" }}</div>
+            <div class="order-items-preview">
+                {% for item in order.items.all|slice:":2" %}{{ item.product_name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                {% if order.items.count > 2 %} +{{ order.items.count|add:"-2" }} more{% endif %}
+            </div>
+            <div style="margin-top:0.75rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+                <span class="status-chip status-{{ order.status }}">
+                    {% if order.status == 'delivered' %}<i class="fas fa-check"></i>
+                    {% elif order.status == 'shipped' %}<i class="fas fa-truck"></i>
+                    {% elif order.status == 'cancelled' %}<i class="fas fa-times"></i>
+                    {% else %}<i class="fas fa-circle" style="font-size:6px;"></i>{% endif %}
+                    {{ order.get_status_display }}
+                </span>
+                <span style="font-size:0.78rem;color:var(--silver);">{{ order.items.count }} item{{ order.items.count|pluralize }}</span>
+            </div>
+        </div>
+        <div style="text-align:right;flex-shrink:0;">
+            <div style="font-family:var(--font-display);font-size:1.4rem;color:var(--gold);">₹{{ order.total }}</div>
+            <div style="font-size:0.72rem;color:var(--silver);font-family:var(--font-mono);margin-top:0.25rem;">{{ order.get_payment_status_display }}</div>
+            <div style="color:var(--gold);font-size:0.8rem;margin-top:0.75rem;">View Details →</div>
+        </div>
+    </a>
+    {% endfor %}
+    {% else %}
+    <div style="text-align:center;padding:5rem 2rem;">
+        <div style="font-size:4rem;color:var(--iron);margin-bottom:2rem;"><i class="fas fa-box-open"></i></div>
+        <h2 style="font-family:var(--font-display);font-size:2rem;color:var(--white);margin-bottom:0.75rem;">No Orders Yet</h2>
+        <p style="color:var(--silver);margin-bottom:2rem;">Start shopping to see your orders here.</p>
+        <a href="{% url 'store:product_list' %}" class="btn btn-gold btn-lg"><i class="fas fa-camera"></i> Shop Now</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

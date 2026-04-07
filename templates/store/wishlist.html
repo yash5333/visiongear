@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% load store_tags %}
+
+{% block title %}My Wishlist — VisionGear{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top:2rem;padding-bottom:5rem;">
+    <div class="page-header">
+        <div class="breadcrumb">
+            <a href="{% url 'store:home' %}">Home</a>
+            <span class="breadcrumb-sep">/</span>
+            <span class="breadcrumb-current">Wishlist</span>
+        </div>
+        <h1 class="page-title">My Wishlist
+            {% if wishlist.products.exists %}
+            <span style="font-size:1rem;color:var(--silver);font-family:var(--font-mono);margin-left:1rem;">({{ wishlist.products.count }} item{{ wishlist.products.count|pluralize }})</span>
+            {% endif %}
+        </h1>
+    </div>
+
+    {% if wishlist.products.exists %}
+    <div class="grid-4">
+        {% for product in wishlist.products.all %}
+        <div class="product-card">
+            <div class="product-img-wrap">
+                {% if product.image %}<img src="{{ product.image.url }}" alt="{{ product.name }}">
+                {% else %}
+                <div class="product-img-placeholder">
+                    {% if product.category.slug == 'cameras' %}<i class="fas fa-camera"></i>
+                    {% elif product.category.slug == 'tripods' %}<i class="fas fa-podcast"></i>
+                    {% elif product.category.slug == 'lighting' %}<i class="fas fa-lightbulb"></i>
+                    {% else %}<i class="fas fa-briefcase"></i>{% endif %}
+                </div>
+                {% endif %}
+                <div class="product-actions-overlay">
+                    <form method="post" action="{% url 'store:toggle_wishlist' product.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="overlay-btn active" title="Remove from Wishlist"><i class="fas fa-heart"></i></button>
+                    </form>
+                    <a href="{{ product.get_absolute_url }}" class="overlay-btn"><i class="fas fa-eye"></i></a>
+                </div>
+            </div>
+            <div class="product-info">
+                <div class="product-category-tag">{{ product.category.name }}</div>
+                <h3 class="product-name"><a href="{{ product.get_absolute_url }}">{{ product.name }}</a></h3>
+                <div class="product-price">
+                    <span class="price-current">₹{{ product.effective_price }}</span>
+                    {% if product.discount_price %}<span class="price-original">₹{{ product.price }}</span>{% endif %}
+                </div>
+                <div style="display:flex;gap:0.5rem;">
+                    <form method="post" action="{% url 'store:move_to_cart' product.id %}" style="flex:1;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-gold w-full btn-sm">
+                            <i class="fas fa-shopping-bag"></i> Move to Cart
+                        </button>
+                    </form>
+                    <form method="post" action="{% url 'store:toggle_wishlist' product.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger btn-sm" title="Remove"><i class="fas fa-trash"></i></button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div style="text-align:center;padding:5rem 2rem;">
+        <div style="font-size:5rem;color:var(--iron);margin-bottom:2rem;"><i class="fas fa-heart"></i></div>
+        <h2 style="font-family:var(--font-display);font-size:2rem;color:var(--white);margin-bottom:0.75rem;">Your Wishlist is Empty</h2>
+        <p style="color:var(--silver);margin-bottom:2rem;">Save your favourite gear for later!</p>
+        <a href="{% url 'store:product_list' %}" class="btn btn-gold btn-lg"><i class="fas fa-camera"></i> Explore Products</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

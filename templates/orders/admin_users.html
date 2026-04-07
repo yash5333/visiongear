@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block title %}Manage Users — VisionGear{% endblock %}
+{% block content %}
+<div class="container" style="padding-top:2rem;padding-bottom:5rem;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem;flex-wrap:wrap;gap:1rem;">
+        <h1 style="font-family:var(--font-display);font-size:2rem;color:var(--white);">Manage Users</h1>
+        <div style="display:flex;gap:0.75rem;">
+            <a href="{% url 'orders:admin_dashboard' %}" class="btn btn-ghost btn-sm"><i class="fas fa-chart-bar"></i> Dashboard</a>
+            <a href="{% url 'orders:admin_orders' %}" class="btn btn-ghost btn-sm"><i class="fas fa-box"></i> Orders</a>
+        </div>
+    </div>
+    <div style="background:var(--charcoal);border:1px solid var(--iron);border-radius:var(--radius);overflow:hidden;">
+        <table style="width:100%;border-collapse:collapse;">
+            <thead>
+                <tr style="background:var(--graphite);">
+                    <th style="padding:1rem;text-align:left;font-family:var(--font-mono);font-size:0.65rem;letter-spacing:2px;text-transform:uppercase;color:var(--silver);border-bottom:1px solid var(--iron);">User</th>
+                    <th style="padding:1rem;text-align:left;font-family:var(--font-mono);font-size:0.65rem;letter-spacing:2px;text-transform:uppercase;color:var(--silver);border-bottom:1px solid var(--iron);">Email</th>
+                    <th style="padding:1rem;text-align:left;font-family:var(--font-mono);font-size:0.65rem;letter-spacing:2px;text-transform:uppercase;color:var(--silver);border-bottom:1px solid var(--iron);">Joined</th>
+                    <th style="padding:1rem;text-align:left;font-family:var(--font-mono);font-size:0.65rem;letter-spacing:2px;text-transform:uppercase;color:var(--silver);border-bottom:1px solid var(--iron);">Orders</th>
+                    <th style="padding:1rem;text-align:left;font-family:var(--font-mono);font-size:0.65rem;letter-spacing:2px;text-transform:uppercase;color:var(--silver);border-bottom:1px solid var(--iron);">Role</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in users %}
+                <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+                    <td style="padding:1rem;">
+                        <div style="display:flex;align-items:center;gap:0.75rem;">
+                            <div style="width:36px;height:36px;background:linear-gradient(135deg,var(--gold-dim),var(--graphite));border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--gold);font-weight:700;font-size:0.82rem;flex-shrink:0;">{{ u.username.0|upper }}</div>
+                            <div>
+                                <div style="color:var(--fog);font-size:0.88rem;">{{ u.username }}</div>
+                                <div style="color:var(--silver);font-size:0.72rem;">{{ u.get_full_name }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td style="padding:1rem;color:var(--ash);font-size:0.82rem;">{{ u.email }}</td>
+                    <td style="padding:1rem;color:var(--silver);font-size:0.78rem;">{{ u.date_joined|date:"M d, Y" }}</td>
+                    <td style="padding:1rem;font-family:var(--font-mono);color:var(--gold);">{{ u.orders.count }}</td>
+                    <td style="padding:1rem;">
+                        {% if u.is_superuser %}<span style="background:rgba(155,89,182,0.15);color:#9b59b6;border:1px solid rgba(155,89,182,0.25);padding:0.2rem 0.6rem;border-radius:20px;font-size:0.65rem;font-family:var(--font-mono);">Superuser</span>
+                        {% elif u.is_staff %}<span style="background:rgba(201,168,76,0.1);color:var(--gold);border:1px solid rgba(201,168,76,0.2);padding:0.2rem 0.6rem;border-radius:20px;font-size:0.65rem;font-family:var(--font-mono);">Staff</span>
+                        {% else %}<span style="background:rgba(255,255,255,0.05);color:var(--silver);border:1px solid var(--iron);padding:0.2rem 0.6rem;border-radius:20px;font-size:0.65rem;font-family:var(--font-mono);">Customer</span>{% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" style="text-align:center;padding:3rem;color:var(--silver);">No users found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

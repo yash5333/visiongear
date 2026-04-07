@@ -1,0 +1,286 @@
+{% extends 'base.html' %}
+{% load store_tags %}
+
+{% block title %}Shop — VisionGear{% endblock %}
+
+{% block extra_css %}
+.shop-layout { display: grid; grid-template-columns: 260px 1fr; gap: 2.5rem; align-items: start; }
+.sidebar {
+    position: sticky; top: 90px;
+    background: var(--charcoal);
+    border: 1px solid var(--iron);
+    border-radius: var(--radius);
+    padding: 1.75rem;
+}
+.sidebar-section { margin-bottom: 2rem; }
+.sidebar-title {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--iron);
+}
+.category-filter-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.55rem 0.75rem;
+    margin: 0.25rem 0;
+    border-radius: var(--radius);
+    color: var(--ash);
+    text-decoration: none;
+    font-size: 0.85rem;
+    transition: var(--transition);
+}
+.category-filter-item:hover { background: rgba(201,168,76,0.06); color: var(--gold); }
+.category-filter-item.active { background: rgba(201,168,76,0.1); color: var(--gold); }
+.filter-count {
+    font-size: 0.7rem;
+    font-family: var(--font-mono);
+    background: var(--graphite);
+    padding: 0.1rem 0.4rem;
+    border-radius: 2px;
+    color: var(--silver);
+}
+.price-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+.price-inputs input {
+    width: 100%;
+    padding: 0.55rem 0.75rem;
+    background: var(--graphite);
+    border: 1px solid var(--iron);
+    color: var(--fog);
+    font-size: 0.82rem;
+    border-radius: var(--radius);
+    outline: none;
+}
+.price-inputs input:focus { border-color: rgba(201,168,76,0.4); }
+
+.products-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--iron);
+}
+.products-count { color: var(--silver); font-size: 0.85rem; }
+.sort-select {
+    background: var(--graphite);
+    border: 1px solid var(--iron);
+    color: var(--fog);
+    padding: 0.5rem 1rem;
+    font-size: 0.82rem;
+    border-radius: var(--radius);
+    cursor: pointer;
+    outline: none;
+}
+.products-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+
+.empty-state {
+    text-align: center;
+    padding: 5rem 2rem;
+    grid-column: 1/-1;
+}
+.empty-icon { font-size: 4rem; color: var(--iron); margin-bottom: 1.5rem; }
+.empty-title { font-family: var(--font-display); font-size: 1.5rem; color: var(--white); margin-bottom: 0.5rem; }
+
+@media (max-width: 1024px) {
+    .shop-layout { grid-template-columns: 1fr; }
+    .sidebar { position: static; }
+    .products-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 480px) { .products-grid { grid-template-columns: 1fr; } }
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <div class="breadcrumb">
+            <a href="{% url 'store:home' %}">Home</a>
+            <span class="breadcrumb-sep">/</span>
+            <span class="breadcrumb-current">{% if current_category %}{{ current_category.name }}{% elif search_query %}Search: "{{ search_query }}"{% else %}All Products{% endif %}</span>
+        </div>
+        <h1 class="page-title">{% if current_category %}{{ current_category.name }}{% elif search_query %}Results for "{{ search_query }}"{% else %}All Products{% endif %}</h1>
+    </div>
+
+    <div class="shop-layout">
+
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <form method="get" action="" id="filterForm">
+                {% if search_query %}<input type="hidden" name="q" value="{{ search_query }}">{% endif %}
+
+                <div class="sidebar-section">
+                    <div class="sidebar-title">Categories</div>
+                    <a href="{% url 'store:product_list' %}{% if search_query %}?q={{ search_query }}{% endif %}"
+                       class="category-filter-item {% if not current_category %}active{% endif %}">
+                        All Products <span class="filter-count">{{ categories|length }}</span>
+                    </a>
+                    {% for cat in categories %}
+                    <a href="{% url 'store:product_list' %}?category={{ cat.slug }}{% if search_query %}&q={{ search_query }}{% endif %}"
+                       class="category-filter-item {% if current_category.slug == cat.slug %}active{% endif %}">
+                        {% if cat.slug == 'cameras' %}<i class="fas fa-camera" style="width:16px;color:var(--gold);"></i>
+                        {% elif cat.slug == 'tripods' %}<i class="fas fa-podcast" style="width:16px;color:var(--gold);"></i>
+                        {% elif cat.slug == 'lighting' %}<i class="fas fa-lightbulb" style="width:16px;color:var(--gold);"></i>
+                        {% else %}<i class="fas fa-briefcase" style="width:16px;color:var(--gold);"></i>{% endif %}
+                        {{ cat.name }}
+                        <span class="filter-count">{{ cat.products.count }}</span>
+                    </a>
+                    {% endfor %}
+                </div>
+
+                <div class="sidebar-section">
+                    <div class="sidebar-title">Price Range (₹)</div>
+                    <div class="price-inputs">
+                        <input type="number" name="min_price" placeholder="Min" value="{{ min_price }}">
+                        <input type="number" name="max_price" placeholder="Max" value="{{ max_price }}">
+                    </div>
+                    {% if current_category %}<input type="hidden" name="category" value="{{ current_category.slug }}">{% endif %}
+                    <button type="submit" class="btn btn-outline w-full mt-2" style="margin-top:0.75rem;">
+                        <i class="fas fa-filter"></i> Apply Filter
+                    </button>
+                </div>
+
+                {% if min_price or max_price %}
+                <a href="{% url 'store:product_list' %}{% if current_category %}?category={{ current_category.slug }}{% endif %}"
+                   class="btn btn-ghost w-full btn-sm" style="margin-top:0.5rem;">
+                    <i class="fas fa-times"></i> Clear Filters
+                </a>
+                {% endif %}
+            </form>
+        </aside>
+
+        <!-- PRODUCTS -->
+        <div>
+            <div class="products-header">
+                <p class="products-count">
+                    Showing <strong style="color:var(--gold);">{{ products.count }}</strong> product{{ products.count|pluralize }}
+                </p>
+                <select class="sort-select" onchange="this.form.submit()" form="sortForm">
+                    <option value="newest" {% if sort_by == 'newest' %}selected{% endif %}>Newest First</option>
+                    <option value="price_low" {% if sort_by == 'price_low' %}selected{% endif %}>Price: Low to High</option>
+                    <option value="price_high" {% if sort_by == 'price_high' %}selected{% endif %}>Price: High to Low</option>
+                    <option value="name" {% if sort_by == 'name' %}selected{% endif %}>Name A-Z</option>
+                </select>
+                <form id="sortForm" method="get">
+                    <input type="hidden" name="sort" id="sortInput">
+                    {% if current_category %}<input type="hidden" name="category" value="{{ current_category.slug }}">{% endif %}
+                    {% if search_query %}<input type="hidden" name="q" value="{{ search_query }}">{% endif %}
+                    {% if min_price %}<input type="hidden" name="min_price" value="{{ min_price }}">{% endif %}
+                    {% if max_price %}<input type="hidden" name="max_price" value="{{ max_price }}">{% endif %}
+                </form>
+            </div>
+
+            <div class="products-grid">
+                {% for product in products %}
+                <div class="product-card">
+                    <div class="product-img-wrap">
+                        {% if product.image %}
+                    <img src="{{ product.image.url }}" alt="{{ product.name }}" loading="lazy"
+                         style="width:100%;height:100%;object-fit:cover;display:block;"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                    <div class="product-img-placeholder" style="display:none;width:100%;height:100%;align-items:center;justify-content:center;font-size:3rem;color:rgba(201,168,76,0.4);">
+                        {% if product.category.slug == 'cameras' %}<i class="fas fa-camera"></i>
+                        {% elif product.category.slug == 'tripods' %}<i class="fas fa-podcast"></i>
+                        {% elif product.category.slug == 'lighting' %}<i class="fas fa-lightbulb"></i>
+                        {% else %}<i class="fas fa-briefcase"></i>{% endif %}
+                    </div>
+                    {% else %}
+                    <div class="product-img-placeholder" style="display:flex;width:100%;height:100%;align-items:center;justify-content:center;font-size:3rem;color:rgba(201,168,76,0.4);">
+                        {% if product.category.slug == 'cameras' %}<i class="fas fa-camera"></i>
+                        {% elif product.category.slug == 'tripods' %}<i class="fas fa-podcast"></i>
+                        {% elif product.category.slug == 'lighting' %}<i class="fas fa-lightbulb"></i>
+                        {% else %}<i class="fas fa-briefcase"></i>{% endif %}
+                    </div>
+                    {% endif %}
+                        {% if product.discount_price %}
+                        <span class="product-badge badge-sale">-{{ product.discount_percent }}%</span>
+                        {% elif product.is_featured %}
+                        <span class="product-badge badge-featured">Featured</span>
+                        {% endif %}
+                        {% if not product.in_stock %}
+                        <div style="position:absolute;inset:0;background:rgba(8,8,8,0.7);display:flex;align-items:center;justify-content:center;">
+                            <span style="font-family:var(--font-mono);font-size:0.75rem;letter-spacing:2px;color:var(--red);text-transform:uppercase;">Out of Stock</span>
+                        </div>
+                        {% endif %}
+                        <div class="product-actions-overlay">
+                            {% if user.is_authenticated %}
+                            <form method="post" action="{% url 'store:toggle_wishlist' product.id %}">
+                                {% csrf_token %}
+                                <button type="submit" class="overlay-btn" title="Wishlist"><i class="fas fa-heart"></i></button>
+                            </form>
+                            {% endif %}
+                            <a href="{{ product.get_absolute_url }}" class="overlay-btn"><i class="fas fa-eye"></i></a>
+                        </div>
+                    </div>
+                    <div class="product-info">
+                        <div class="product-category-tag">{{ product.category.name }}</div>
+                        <h3 class="product-name"><a href="{{ product.get_absolute_url }}">{{ product.name }}</a></h3>
+                        {% if product.brand %}<p style="font-size:0.75rem;color:var(--silver);margin-bottom:0.4rem;">{{ product.brand }}</p>{% endif %}
+                        <div class="product-rating">
+                            <span class="stars">{{ product.avg_rating|star_rating }}</span>
+                            <span class="rating-count">({{ product.review_count }})</span>
+                        </div>
+                        <div class="product-price">
+                            <span class="price-current">₹{{ product.effective_price }}</span>
+                            {% if product.discount_price %}<span class="price-original">₹{{ product.price }}</span>{% endif %}
+                        </div>
+                        {% if product.in_stock %}
+                        <form method="post" action="{% url 'store:add_to_cart' product.id %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="quantity" value="1">
+                            <button type="submit" class="btn btn-gold w-full">
+                                <i class="fas fa-shopping-bag"></i> Add to Cart
+                            </button>
+                        </form>
+                        {% else %}
+                        <button class="btn btn-ghost w-full" disabled>Out of Stock</button>
+                        {% endif %}
+                    </div>
+                </div>
+                {% empty %}
+                <div class="empty-state">
+                    <div class="empty-icon"><i class="fas fa-search"></i></div>
+                    <h3 class="empty-title">No Products Found</h3>
+                    <p style="color:var(--silver);margin-bottom:1.5rem;">Try adjusting your filters or search query.</p>
+                    <a href="{% url 'store:product_list' %}" class="btn btn-gold">Browse All Products</a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.querySelector('.sort-select').addEventListener('change', function() {
+    document.getElementById('sortInput').value = this.value;
+    document.getElementById('sortForm').submit();
+});
+
+document.querySelectorAll('form[action*="add_to_cart"]').forEach(form => {
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const res = await fetch(this.action, {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRFToken': getCookie('csrftoken') },
+            body: new FormData(this),
+        });
+        const json = await res.json();
+        if (json.success) {
+            updateCartBadge(json.cart_count);
+            const btn = this.querySelector('button');
+            const orig = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-check"></i> Added!';
+            btn.style.background = 'linear-gradient(135deg,#27ae60,#1e8449)';
+            setTimeout(() => { btn.innerHTML = orig; btn.style.background = ''; }, 1800);
+        }
+    });
+});
+</script>
+{% endblock %}

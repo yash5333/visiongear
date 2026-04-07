@@ -1,0 +1,193 @@
+{% extends 'base.html' %}
+{% load store_tags %}
+
+{% block title %}Checkout — VisionGear{% endblock %}
+
+{% block extra_css %}
+.checkout-grid { display:grid; grid-template-columns:1fr 380px; gap:2.5rem; align-items:start; }
+.checkout-section { background:var(--charcoal); border:1px solid var(--iron); border-radius:var(--radius); padding:2rem; margin-bottom:1.5rem; }
+.checkout-section-title { font-family:var(--font-display); font-size:1.2rem; color:var(--white); margin-bottom:1.5rem; padding-bottom:1rem; border-bottom:1px solid var(--iron); display:flex; align-items:center; gap:0.75rem; }
+.checkout-section-title i { color:var(--gold); }
+.form-row-2 { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+.form-row-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:1rem; }
+.payment-method { display:flex; gap:1rem; flex-wrap:wrap; margin-bottom:1.5rem; }
+.payment-option { flex:1; min-width:140px; padding:1rem; background:var(--graphite); border:2px solid var(--iron); border-radius:var(--radius); cursor:pointer; text-align:center; transition:var(--transition); }
+.payment-option.selected { border-color:var(--gold); background:rgba(201,168,76,0.06); }
+.payment-option input { display:none; }
+.payment-option i { font-size:1.5rem; color:var(--silver); margin-bottom:0.5rem; display:block; }
+.payment-option.selected i { color:var(--gold); }
+.payment-option label { font-size:0.78rem; font-family:var(--font-mono); letter-spacing:1px; cursor:pointer; color:var(--ash); }
+
+.order-review { position:sticky; top:90px; background:var(--charcoal); border:1px solid var(--iron); border-radius:var(--radius); padding:2rem; }
+.order-review-item { display:flex; gap:1rem; align-items:center; padding:0.75rem 0; border-bottom:1px solid rgba(255,255,255,0.05); }
+.order-review-img { width:52px; height:42px; background:var(--graphite); border-radius:var(--radius); display:flex; align-items:center; justify-content:center; font-size:1.2rem; color:var(--iron); flex-shrink:0; overflow:hidden; }
+.order-review-img img { width:100%; height:100%; object-fit:cover; }
+.order-review-name { font-size:0.82rem; color:var(--fog); flex:1; }
+.order-review-price { font-family:var(--font-mono); font-size:0.85rem; color:var(--gold); }
+@media (max-width:768px) { .checkout-grid { grid-template-columns:1fr; } .order-review { position:static; } .form-row-2,.form-row-3 { grid-template-columns:1fr; } }
+{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top:2rem;padding-bottom:5rem;">
+    <div class="page-header">
+        <div class="breadcrumb">
+            <a href="{% url 'store:home' %}">Home</a>
+            <span class="breadcrumb-sep">/</span>
+            <a href="{% url 'store:cart' %}">Cart</a>
+            <span class="breadcrumb-sep">/</span>
+            <span class="breadcrumb-current">Checkout</span>
+        </div>
+        <h1 class="page-title">Checkout</h1>
+    </div>
+
+    <form method="post" action="{% url 'orders:place_order' %}">
+        {% csrf_token %}
+        <div class="checkout-grid">
+            <div>
+                <!-- Shipping -->
+                <div class="checkout-section">
+                    <div class="checkout-section-title"><i class="fas fa-map-marker-alt"></i> Shipping Information</div>
+                    <div class="form-row-2">
+                        <div class="form-group">
+                            <label class="form-label">Full Name</label>
+                            <input type="text" name="full_name" class="form-control" value="{{ initial_data.full_name }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Email</label>
+                            <input type="email" name="email" class="form-control" value="{{ initial_data.email }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Phone</label>
+                            <input type="tel" name="phone" class="form-control" value="{{ initial_data.phone }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Pincode</label>
+                            <input type="text" name="pincode" class="form-control" value="{{ initial_data.pincode }}" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Street Address</label>
+                        <textarea name="address" class="form-control" rows="2" required style="resize:none;">{{ initial_data.address }}</textarea>
+                    </div>
+                    <div class="form-row-3">
+                        <div class="form-group">
+                            <label class="form-label">City</label>
+                            <input type="text" name="city" class="form-control" value="{{ initial_data.city }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">State</label>
+                            <input type="text" name="state" class="form-control" value="{{ initial_data.state }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Country</label>
+                            <input type="text" name="country" class="form-control" value="{{ initial_data.country }}">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Order Notes (Optional)</label>
+                        <textarea name="notes" class="form-control" rows="2" placeholder="Any special instructions..." style="resize:none;"></textarea>
+                    </div>
+                </div>
+
+                <!-- Payment -->
+                <div class="checkout-section">
+                    <div class="checkout-section-title"><i class="fas fa-credit-card"></i> Payment Method</div>
+                    <div class="payment-method">
+                        <div class="payment-option selected" id="pm-demo" onclick="selectPM('demo',this)">
+                            <input type="radio" name="payment_method" value="demo" checked>
+                            <i class="fas fa-bolt"></i>
+                            <label>Demo Pay</label>
+                        </div>
+                        <div class="payment-option" id="pm-card" onclick="selectPM('card',this)">
+                            <input type="radio" name="payment_method" value="card">
+                            <i class="fas fa-credit-card"></i>
+                            <label>Credit Card</label>
+                        </div>
+                        <div class="payment-option" id="pm-upi" onclick="selectPM('upi',this)">
+                            <input type="radio" name="payment_method" value="upi">
+                            <i class="fas fa-mobile-alt"></i>
+                            <label>UPI</label>
+                        </div>
+                        <div class="payment-option" id="pm-cod" onclick="selectPM('cod',this)">
+                            <input type="radio" name="payment_method" value="cod">
+                            <i class="fas fa-money-bill-wave"></i>
+                            <label>Cash on Delivery</label>
+                        </div>
+                    </div>
+                    <div id="demo-notice" style="background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.2);border-radius:var(--radius);padding:1rem;font-size:0.82rem;color:var(--ash);">
+                        <i class="fas fa-info-circle" style="color:var(--gold);"></i> This is a <strong style="color:var(--gold);">demo payment</strong>. No real charges will be made. Order will be marked as paid automatically.
+                    </div>
+                    <div id="card-fields" style="display:none;margin-top:1rem;">
+                        <div class="form-row-2">
+                            <div class="form-group" style="grid-column:1/-1;">
+                                <label class="form-label">Card Number</label>
+                                <input type="text" class="form-control" placeholder="1234 5678 9012 3456" maxlength="19">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Expiry</label>
+                                <input type="text" class="form-control" placeholder="MM/YY">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">CVV</label>
+                                <input type="text" class="form-control" placeholder="123">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ORDER REVIEW -->
+            <div class="order-review">
+                <div style="font-family:var(--font-display);font-size:1.2rem;color:var(--white);margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:1px solid var(--iron);">Order Review</div>
+                {% for item in cart.items.all %}
+                <div class="order-review-item">
+                    <div class="order-review-img">
+                        {% if item.product.image %}<img src="{{ item.product.image.url }}" alt="">
+                        {% else %}<i class="fas fa-camera"></i>{% endif %}
+                    </div>
+                    <div class="order-review-name">{{ item.product.name }}<br><span style="color:var(--silver);font-size:0.72rem;">Qty: {{ item.quantity }}</span></div>
+                    <div class="order-review-price">₹{{ item.subtotal }}</div>
+                </div>
+                {% endfor %}
+
+                <div style="margin-top:1rem;">
+                    <div class="summary-row" style="display:flex;justify-content:space-between;font-size:0.85rem;color:var(--ash);margin-bottom:0.5rem;">
+                        <span>Subtotal</span><span style="font-family:var(--font-mono);color:var(--fog);">₹{{ subtotal }}</span>
+                    </div>
+                    <div class="summary-row" style="display:flex;justify-content:space-between;font-size:0.85rem;color:var(--ash);margin-bottom:0.5rem;">
+                        <span>Shipping</span>
+                        <span style="font-family:var(--font-mono);color:{% if shipping == 0 %}var(--green){% else %}var(--fog){% endif %};">
+                            {% if shipping == 0 %}Free{% else %}₹{{ shipping }}{% endif %}
+                        </span>
+                    </div>
+                    <div class="summary-row" style="display:flex;justify-content:space-between;font-size:0.85rem;color:var(--ash);margin-bottom:0.5rem;">
+                        <span>GST (18%)</span><span style="font-family:var(--font-mono);color:var(--fog);">₹{{ tax }}</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;font-family:var(--font-display);font-size:1.4rem;color:var(--white);margin-top:1rem;padding-top:1rem;border-top:1px solid var(--iron);">
+                        <span>Total</span><span style="color:var(--gold);">₹{{ total }}</span>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-gold w-full btn-lg" style="margin-top:1.5rem;">
+                    <i class="fas fa-lock"></i> Place Order
+                </button>
+                <div style="display:flex;align-items:center;justify-content:center;gap:0.5rem;margin-top:1rem;font-size:0.7rem;color:var(--silver);font-family:var(--font-mono);">
+                    <i class="fas fa-shield-alt" style="color:var(--gold);"></i> SECURED BY SSL
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function selectPM(type, el) {
+    document.querySelectorAll('.payment-option').forEach(o => { o.classList.remove('selected'); o.querySelector('input').checked = false; });
+    el.classList.add('selected');
+    el.querySelector('input').checked = true;
+    document.getElementById('demo-notice').style.display = type === 'demo' ? 'block' : 'none';
+    document.getElementById('card-fields').style.display = type === 'card' ? 'block' : 'none';
+}
+</script>
+{% endblock %}

@@ -1,0 +1,884 @@
+{% extends 'base.html' %}
+{% load static store_tags %}
+
+{% block title %}VisionGear — Premium Photography & Videography Equipment{% endblock %}
+
+{% block extra_css %}
+/* ── HERO ── */
+.hero {
+    position: relative;
+    height: 100vh;
+    min-height: 680px;
+    overflow: hidden;
+}
+.hero-slides { position: relative; width: 100%; height: 100%; }
+
+.hero-slide {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 1.2s ease;
+    display: flex;
+    align-items: center;
+}
+.hero-slide.active { opacity: 1; }
+
+.hero-slide-bg {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    transform: scale(1.05);
+    transition: transform 8s ease;
+}
+.hero-slide.active .hero-slide-bg { transform: scale(1); }
+
+.hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        105deg,
+        rgba(8,8,8,0.92) 0%,
+        rgba(8,8,8,0.6) 50%,
+        rgba(8,8,8,0.2) 100%
+    );
+}
+
+.hero-content {
+    position: relative;
+    z-index: 2;
+    max-width: 700px;
+    padding: 0 4rem;
+    animation: fadeInUp 0.8s ease 0.3s both;
+}
+
+.hero-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+.hero-eyebrow::before {
+    content: '';
+    width: 40px;
+    height: 1px;
+    background: var(--gold);
+}
+
+.hero-title {
+    font-family: var(--font-display);
+    font-size: clamp(3rem, 7vw, 5.5rem);
+    font-weight: 300;
+    color: var(--white);
+    line-height: 1.05;
+    margin-bottom: 1.5rem;
+    letter-spacing: -1px;
+}
+.hero-title em { color: var(--gold); font-style: italic; }
+
+.hero-subtitle {
+    font-size: 1rem;
+    color: var(--ash);
+    line-height: 1.8;
+    margin-bottom: 2.5rem;
+    max-width: 480px;
+}
+
+.hero-actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+/* Carousel controls */
+.hero-controls {
+    position: absolute;
+    bottom: 2.5rem;
+    left: 4rem;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.hero-dots {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.hero-dot {
+    width: 24px;
+    height: 2px;
+    background: rgba(255,255,255,0.25);
+    cursor: pointer;
+    transition: var(--transition);
+    border: none;
+}
+.hero-dot.active { background: var(--gold); width: 40px; }
+
+.hero-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+    width: 50px; height: 50px;
+    background: rgba(8,8,8,0.6);
+    border: 1px solid rgba(201,168,76,0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ash);
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: var(--transition);
+}
+.hero-nav:hover { border-color: var(--gold); color: var(--gold); background: rgba(201,168,76,0.1); }
+.hero-nav-prev { left: 2rem; }
+.hero-nav-next { right: 2rem; }
+
+/* Stats bar */
+.stats-bar {
+    background: var(--charcoal);
+    border-top: 1px solid rgba(201,168,76,0.1);
+    border-bottom: 1px solid rgba(201,168,76,0.1);
+    padding: 1.5rem 0;
+}
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    divide-x: 1px solid var(--iron);
+}
+.stat-item {
+    text-align: center;
+    padding: 0.5rem 2rem;
+    border-right: 1px solid var(--iron);
+}
+.stat-item:last-child { border-right: none; }
+.stat-number {
+    font-family: var(--font-display);
+    font-size: 2rem;
+    font-weight: 300;
+    color: var(--gold);
+    line-height: 1;
+    margin-bottom: 0.25rem;
+}
+.stat-label {
+    font-size: 0.7rem;
+    font-family: var(--font-mono);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--silver);
+}
+
+/* ── CATEGORIES ── */
+.categories-scroll {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+}
+.category-card {
+    position: relative;
+    aspect-ratio: 3/4;
+    overflow: hidden;
+    border-radius: var(--radius);
+    cursor: pointer;
+    background: var(--charcoal);
+    border: 1px solid var(--iron);
+    text-decoration: none;
+    display: block;
+    transition: var(--transition);
+}
+.category-card:hover { transform: translateY(-6px); box-shadow: 0 24px 60px rgba(0,0,0,0.5); }
+.category-card-bg {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 5rem;
+    color: var(--iron);
+    transition: transform 0.6s ease;
+}
+.category-card:hover .category-card-bg { transform: scale(1.1); }
+.category-card-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(8,8,8,0.95) 0%, rgba(8,8,8,0.3) 60%, transparent 100%);
+}
+.category-card-content {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 1.5rem;
+}
+.category-icon-small {
+    width: 40px; height: 40px;
+    background: rgba(201,168,76,0.1);
+    border: 1px solid rgba(201,168,76,0.3);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--gold);
+    font-size: 0.9rem;
+    margin-bottom: 0.75rem;
+}
+.category-name {
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: var(--white);
+    margin-bottom: 0.25rem;
+}
+.category-count {
+    font-size: 0.7rem;
+    font-family: var(--font-mono);
+    color: var(--gold);
+    letter-spacing: 2px;
+}
+.category-arrow {
+    position: absolute;
+    top: 1.25rem;
+    right: 1.25rem;
+    color: var(--gold);
+    opacity: 0;
+    transform: translateX(-8px);
+    transition: var(--transition);
+}
+.category-card:hover .category-arrow { opacity: 1; transform: translateX(0); }
+
+/* ── FEATURED ── */
+.featured-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+}
+
+/* ── PROMO BANNER ── */
+.promo-banner {
+    background: linear-gradient(135deg, var(--charcoal) 0%, var(--graphite) 100%);
+    border: 1px solid rgba(201,168,76,0.15);
+    border-radius: var(--radius);
+    padding: 4rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+}
+.promo-banner::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(201,168,76,0.06) 0%, transparent 70%);
+}
+.promo-tag {
+    display: inline-block;
+    padding: 0.3rem 0.75rem;
+    background: rgba(201,168,76,0.1);
+    border: 1px solid rgba(201,168,76,0.25);
+    color: var(--gold);
+    font-size: 0.68rem;
+    font-family: var(--font-mono);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+    border-radius: 1px;
+}
+.promo-title {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 3.5vw, 3rem);
+    font-weight: 300;
+    color: var(--white);
+    line-height: 1.15;
+    margin-bottom: 1rem;
+}
+.promo-desc { color: var(--ash); line-height: 1.8; font-size: 0.9rem; margin-bottom: 2rem; }
+.promo-visual {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 8rem;
+    color: rgba(201,168,76,0.08);
+    position: relative;
+}
+.promo-visual-icon {
+    position: absolute;
+    font-size: 5rem;
+    color: rgba(201,168,76,0.15);
+    animation: float 4s ease-in-out infinite;
+}
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-12px); }
+}
+
+/* ── TESTIMONIALS ── */
+.testimonials-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+}
+.testimonial-card {
+    background: var(--charcoal);
+    border: 1px solid var(--iron);
+    border-radius: var(--radius);
+    padding: 2rem;
+    position: relative;
+    transition: var(--transition);
+}
+.testimonial-card:hover { border-color: rgba(201,168,76,0.25); }
+.testimonial-card::before {
+    content: '"';
+    position: absolute;
+    top: 1rem;
+    right: 1.5rem;
+    font-family: var(--font-display);
+    font-size: 4rem;
+    color: rgba(201,168,76,0.1);
+    line-height: 1;
+}
+.testimonial-stars { color: var(--gold); font-size: 0.8rem; margin-bottom: 1rem; }
+.testimonial-text { color: var(--ash); font-size: 0.88rem; line-height: 1.8; margin-bottom: 1.5rem; font-style: italic; }
+.testimonial-author { display: flex; align-items: center; gap: 0.75rem; }
+.testimonial-avatar {
+    width: 42px; height: 42px;
+    background: linear-gradient(135deg, var(--gold-dim), var(--graphite));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--gold);
+    font-weight: 700;
+    font-size: 0.85rem;
+}
+.testimonial-name { font-weight: 600; font-size: 0.88rem; color: var(--white); }
+.testimonial-role { font-size: 0.72rem; color: var(--silver); font-family: var(--font-mono); letter-spacing: 1px; }
+
+/* ── NEWSLETTER ── */
+.newsletter-section {
+    background: var(--obsidian);
+    border-top: 1px solid rgba(201,168,76,0.1);
+    padding: 5rem 0;
+    text-align: center;
+}
+.newsletter-form {
+    display: flex;
+    gap: 0;
+    max-width: 480px;
+    margin: 2rem auto 0;
+}
+.newsletter-form input {
+    flex: 1;
+    padding: 0.9rem 1.25rem;
+    background: var(--graphite);
+    border: 1px solid var(--iron);
+    border-right: none;
+    color: var(--fog);
+    font-family: var(--font-body);
+    font-size: 0.9rem;
+    border-radius: var(--radius) 0 0 var(--radius);
+    outline: none;
+}
+.newsletter-form button {
+    border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+@media (max-width: 768px) {
+    .hero-content { padding: 0 1.5rem; }
+    .categories-scroll, .featured-grid { grid-template-columns: repeat(2, 1fr); }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .testimonials-grid { grid-template-columns: 1fr; }
+    .promo-banner { grid-template-columns: 1fr; padding: 2rem; }
+    .promo-visual { display: none; }
+    .hero-controls { left: 1.5rem; }
+}
+{% endblock %}
+
+{% block content %}
+
+<!-- ── HERO CAROUSEL ── -->
+<section class="hero">
+    <div class="hero-slides" id="heroSlides">
+
+        <div class="hero-slide active">
+            <div class="hero-slide-bg" style="background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%), url('data:image/svg+xml,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"100\" height=\"100\"><circle cx=\"50\" cy=\"50\" r=\"40\" fill=\"none\" stroke=\"rgba(201,168,76,0.05)\" stroke-width=\"1\"/></svg>');"></div>
+            <div class="hero-overlay"></div>
+            <div class="container hero-content">
+                <div class="hero-eyebrow">New Collection 2025</div>
+                <h1 class="hero-title">
+                    Capture Every<br>
+                    <em>Moment</em> in<br>
+                    Perfect Detail
+                </h1>
+                <p class="hero-subtitle">Professional-grade cameras and lenses engineered for photographers who refuse to compromise on quality.</p>
+                <div class="hero-actions">
+                    <a href="{% url 'store:product_list' %}?category=cameras" class="btn btn-gold btn-lg">
+                        <i class="fas fa-camera"></i> Shop Cameras
+                    </a>
+                    <a href="{% url 'store:product_list' %}" class="btn btn-outline btn-lg">Explore All</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="hero-slide">
+            <div class="hero-slide-bg" style="background: radial-gradient(ellipse at 70% 50%, rgba(201,168,76,0.04) 0%, transparent 60%), linear-gradient(135deg, #080808 0%, #181818 100%);"></div>
+            <div class="hero-overlay"></div>
+            <div class="container hero-content">
+                <div class="hero-eyebrow">Professional Studio</div>
+                <h1 class="hero-title">
+                    Light Up Your<br>
+                    <em>Vision</em> with<br>
+                    Studio Lighting
+                </h1>
+                <p class="hero-subtitle">From softboxes to LED panels — illuminate your subjects with precision and artistic control.</p>
+                <div class="hero-actions">
+                    <a href="{% url 'store:product_list' %}?category=lighting" class="btn btn-gold btn-lg">
+                        <i class="fas fa-lightbulb"></i> Shop Lighting
+                    </a>
+                    <a href="{% url 'store:product_list' %}" class="btn btn-outline btn-lg">View All</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="hero-slide">
+            <div class="hero-slide-bg" style="background: radial-gradient(circle at 30% 70%, rgba(201,168,76,0.03) 0%, transparent 50%), linear-gradient(135deg, #0a0a0a 0%, #161616 100%);"></div>
+            <div class="hero-overlay"></div>
+            <div class="container hero-content">
+                <div class="hero-eyebrow">Cinematic Stability</div>
+                <h1 class="hero-title">
+                    Steady Shots,<br>
+                    <em>Flawless</em><br>
+                    Filmmaking
+                </h1>
+                <p class="hero-subtitle">Premium tripods and stabilisers that keep your frame rock-solid from golden hour to midnight shoots.</p>
+                <div class="hero-actions">
+                    <a href="{% url 'store:product_list' %}?category=tripods" class="btn btn-gold btn-lg">
+                        <i class="fas fa-video"></i> Shop Tripods
+                    </a>
+                    <a href="{% url 'store:product_list' %}" class="btn btn-outline btn-lg">Explore</a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Nav arrows -->
+    <button class="hero-nav hero-nav-prev" id="heroPrev"><i class="fas fa-chevron-left"></i></button>
+    <button class="hero-nav hero-nav-next" id="heroNext"><i class="fas fa-chevron-right"></i></button>
+
+    <!-- Dots -->
+    <div class="hero-controls">
+        <div class="hero-dots" id="heroDots">
+            <button class="hero-dot active" data-index="0"></button>
+            <button class="hero-dot" data-index="1"></button>
+            <button class="hero-dot" data-index="2"></button>
+        </div>
+    </div>
+
+    <!-- Scroll indicator -->
+    <div style="position:absolute;bottom:2.5rem;right:4rem;z-index:10;display:flex;flex-direction:column;align-items:center;gap:0.5rem;">
+        <span style="font-size:0.6rem;font-family:var(--font-mono);letter-spacing:3px;text-transform:uppercase;color:var(--silver);writing-mode:vertical-rl;">Scroll</span>
+        <div style="width:1px;height:40px;background:linear-gradient(to bottom, var(--gold), transparent);"></div>
+    </div>
+</section>
+
+<!-- ── STATS BAR ── -->
+<div class="stats-bar">
+    <div class="container">
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-number">500+</div>
+                <div class="stat-label">Products</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">50K+</div>
+                <div class="stat-label">Happy Creators</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">15+</div>
+                <div class="stat-label">Premium Brands</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">4.9★</div>
+                <div class="stat-label">Avg. Rating</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── SHOP BY CATEGORY ── -->
+<section class="section" style="background:var(--obsidian);">
+    <div class="container">
+        <div class="section-header">
+            <div class="section-eyebrow">Browse by Type</div>
+            <h2 class="section-title">Shop by Category</h2>
+            <div class="section-divider"></div>
+        </div>
+        <div class="categories-scroll">
+            <a href="{% url 'store:product_list' %}?category=cameras" class="category-card">
+                <div class="category-card-bg"><i class="fas fa-camera"></i></div>
+                <div class="category-card-overlay"></div>
+                <div class="category-card-content">
+                    <div class="category-icon-small"><i class="fas fa-camera"></i></div>
+                    <div class="category-name">Cameras</div>
+                    <div class="category-count">DSLR · Mirrorless · Cinema</div>
+                </div>
+                <div class="category-arrow"><i class="fas fa-arrow-right"></i></div>
+            </a>
+            <a href="{% url 'store:product_list' %}?category=tripods" class="category-card">
+                <div class="category-card-bg"><i class="fas fa-podcast"></i></div>
+                <div class="category-card-overlay"></div>
+                <div class="category-card-content">
+                    <div class="category-icon-small"><i class="fas fa-podcast"></i></div>
+                    <div class="category-name">Tripods</div>
+                    <div class="category-count">Fluid · Carbon · Gorillapod</div>
+                </div>
+                <div class="category-arrow"><i class="fas fa-arrow-right"></i></div>
+            </a>
+            <a href="{% url 'store:product_list' %}?category=lighting" class="category-card">
+                <div class="category-card-bg"><i class="fas fa-lightbulb"></i></div>
+                <div class="category-card-overlay"></div>
+                <div class="category-card-content">
+                    <div class="category-icon-small"><i class="fas fa-lightbulb"></i></div>
+                    <div class="category-name">Lighting</div>
+                    <div class="category-count">LED · Strobe · Softbox</div>
+                </div>
+                <div class="category-arrow"><i class="fas fa-arrow-right"></i></div>
+            </a>
+            <a href="{% url 'store:product_list' %}?category=bags" class="category-card">
+                <div class="category-card-bg"><i class="fas fa-briefcase"></i></div>
+                <div class="category-card-overlay"></div>
+                <div class="category-card-content">
+                    <div class="category-icon-small"><i class="fas fa-briefcase"></i></div>
+                    <div class="category-name">Camera Bags</div>
+                    <div class="category-count">Backpack · Sling · Hard Case</div>
+                </div>
+                <div class="category-arrow"><i class="fas fa-arrow-right"></i></div>
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- ── FEATURED PRODUCTS ── -->
+{% if featured_products %}
+<section class="section">
+    <div class="container">
+        <div class="section-header">
+            <div class="section-eyebrow">Hand-Picked for You</div>
+            <h2 class="section-title">Featured Products</h2>
+            <div class="section-divider"></div>
+        </div>
+        <div class="featured-grid">
+            {% for product in featured_products %}
+            <div class="product-card fade-in-up" style="animation-delay:{{ forloop.counter0 }}00ms">
+                <div class="product-img-wrap">
+                    {% if product.image %}
+                    <img src="{{ product.image.url }}" alt="{{ product.name }}" loading="lazy"
+                         style="width:100%;height:100%;object-fit:cover;display:block;"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                    <div class="product-img-placeholder" style="display:none;width:100%;height:100%;align-items:center;justify-content:center;font-size:3rem;color:rgba(201,168,76,0.4);">
+                        {% if product.category.slug == 'cameras' %}<i class="fas fa-camera"></i>
+                        {% elif product.category.slug == 'tripods' %}<i class="fas fa-podcast"></i>
+                        {% elif product.category.slug == 'lighting' %}<i class="fas fa-lightbulb"></i>
+                        {% else %}<i class="fas fa-briefcase"></i>{% endif %}
+                    </div>
+                    {% else %}
+                    <div class="product-img-placeholder" style="display:flex;width:100%;height:100%;align-items:center;justify-content:center;font-size:3rem;color:rgba(201,168,76,0.4);">
+                        {% if product.category.slug == 'cameras' %}<i class="fas fa-camera"></i>
+                        {% elif product.category.slug == 'tripods' %}<i class="fas fa-podcast"></i>
+                        {% elif product.category.slug == 'lighting' %}<i class="fas fa-lightbulb"></i>
+                        {% else %}<i class="fas fa-briefcase"></i>{% endif %}
+                    </div>
+                    {% endif %}
+                    {% if product.discount_price %}
+                    <span class="product-badge badge-sale">-{{ product.discount_percent }}%</span>
+                    {% else %}
+                    <span class="product-badge badge-featured">Featured</span>
+                    {% endif %}
+                    <div class="product-actions-overlay">
+                        {% if user.is_authenticated %}
+                        <form method="post" action="{% url 'store:toggle_wishlist' product.id %}" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="overlay-btn" title="Wishlist"><i class="fas fa-heart"></i></button>
+                        </form>
+                        {% endif %}
+                        <a href="{{ product.get_absolute_url }}" class="overlay-btn" title="Quick View"><i class="fas fa-eye"></i></a>
+                    </div>
+                </div>
+                <div class="product-info">
+                    <div class="product-category-tag">{{ product.category.name }}</div>
+                    <h3 class="product-name"><a href="{{ product.get_absolute_url }}">{{ product.name }}</a></h3>
+                    <div class="product-rating">
+                        <span class="stars">{{ product.avg_rating|star_rating }}</span>
+                        <span class="rating-count">({{ product.review_count }})</span>
+                    </div>
+                    <div class="product-price">
+                        <span class="price-current">₹{{ product.effective_price }}</span>
+                        {% if product.discount_price %}
+                        <span class="price-original">₹{{ product.price }}</span>
+                        {% endif %}
+                    </div>
+                    <form method="post" action="{% url 'store:add_to_cart' product.id %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="quantity" value="1">
+                        <button type="submit" class="btn btn-gold w-full">
+                            <i class="fas fa-shopping-bag"></i> Add to Cart
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="text-center mt-4">
+            <a href="{% url 'store:product_list' %}" class="btn btn-outline btn-lg">View All Products <i class="fas fa-arrow-right"></i></a>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- ── PROMO BANNER ── -->
+<section class="section" style="background:var(--obsidian);">
+    <div class="container">
+        <div class="promo-banner">
+            <div>
+                <div class="promo-tag">Limited Time Offer</div>
+                <h2 class="promo-title">Free Shipping on<br>Orders Over ₹5,000</h2>
+                <p class="promo-desc">Get your professional gear delivered right to your door — no shipping cost on qualifying orders. Plus 18% off on selected bundles this season.</p>
+                <div style="display:flex;gap:1rem;flex-wrap:wrap;">
+                    <a href="{% url 'store:product_list' %}" class="btn btn-gold">Shop Now <i class="fas fa-arrow-right"></i></a>
+                    <a href="{% url 'store:product_list' %}?sort=price_low" class="btn btn-ghost">Best Deals</a>
+                </div>
+            </div>
+            <div class="promo-visual">
+                <i class="fas fa-circle" style="font-size:20rem;color:rgba(201,168,76,0.03);"></i>
+                <i class="fas fa-camera promo-visual-icon" style="font-size:6rem;"></i>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ── NEW ARRIVALS ── -->
+{% if new_arrivals %}
+<section class="section">
+    <div class="container">
+        <div class="section-header">
+            <div class="section-eyebrow">Just Landed</div>
+            <h2 class="section-title">New Arrivals</h2>
+            <div class="section-divider"></div>
+        </div>
+        <div class="featured-grid">
+            {% for product in new_arrivals %}
+            <div class="product-card">
+                <div class="product-img-wrap">
+                    {% if product.image %}
+                    <img src="{{ product.image.url }}" alt="{{ product.name }}" loading="lazy"
+                         style="width:100%;height:100%;object-fit:cover;display:block;"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                    <div class="product-img-placeholder" style="display:none;width:100%;height:100%;align-items:center;justify-content:center;font-size:3rem;color:rgba(201,168,76,0.4);">
+                        {% if product.category.slug == 'cameras' %}<i class="fas fa-camera"></i>
+                        {% elif product.category.slug == 'tripods' %}<i class="fas fa-podcast"></i>
+                        {% elif product.category.slug == 'lighting' %}<i class="fas fa-lightbulb"></i>
+                        {% else %}<i class="fas fa-briefcase"></i>{% endif %}
+                    </div>
+                    {% else %}
+                    <div class="product-img-placeholder" style="display:flex;width:100%;height:100%;align-items:center;justify-content:center;font-size:3rem;color:rgba(201,168,76,0.4);">
+                        {% if product.category.slug == 'cameras' %}<i class="fas fa-camera"></i>
+                        {% elif product.category.slug == 'tripods' %}<i class="fas fa-podcast"></i>
+                        {% elif product.category.slug == 'lighting' %}<i class="fas fa-lightbulb"></i>
+                        {% else %}<i class="fas fa-briefcase"></i>{% endif %}
+                    </div>
+                    {% endif %}
+                    <span class="product-badge badge-new">New</span>
+                    <div class="product-actions-overlay">
+                        {% if user.is_authenticated %}
+                        <form method="post" action="{% url 'store:toggle_wishlist' product.id %}" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="overlay-btn"><i class="fas fa-heart"></i></button>
+                        </form>
+                        {% endif %}
+                        <a href="{{ product.get_absolute_url }}" class="overlay-btn"><i class="fas fa-eye"></i></a>
+                    </div>
+                </div>
+                <div class="product-info">
+                    <div class="product-category-tag">{{ product.category.name }}</div>
+                    <h3 class="product-name"><a href="{{ product.get_absolute_url }}">{{ product.name }}</a></h3>
+                    <div class="product-price">
+                        <span class="price-current">₹{{ product.effective_price }}</span>
+                        {% if product.discount_price %}<span class="price-original">₹{{ product.price }}</span>{% endif %}
+                    </div>
+                    <form method="post" action="{% url 'store:add_to_cart' product.id %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="quantity" value="1">
+                        <button type="submit" class="btn btn-outline w-full">
+                            <i class="fas fa-plus"></i> Add to Cart
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- ── TESTIMONIALS ── -->
+<section class="section" style="background:var(--obsidian);">
+    <div class="container">
+        <div class="section-header">
+            <div class="section-eyebrow">From Our Community</div>
+            <h2 class="section-title">What Creators Say</h2>
+            <div class="section-divider"></div>
+        </div>
+        <div class="testimonials-grid">
+            <div class="testimonial-card">
+                <div class="testimonial-stars">★★★★★</div>
+                <p class="testimonial-text">VisionGear completely transformed my studio setup. The lighting equipment is professional-grade and the customer support was exceptional throughout.</p>
+                <div class="testimonial-author">
+                    <div class="testimonial-avatar">RK</div>
+                    <div>
+                        <div class="testimonial-name">Rahul Kumar</div>
+                        <div class="testimonial-role">Wedding Photographer · Mumbai</div>
+                    </div>
+                </div>
+            </div>
+            <div class="testimonial-card">
+                <div class="testimonial-stars">★★★★★</div>
+                <p class="testimonial-text">Finally a store that understands what filmmakers need. The carbon fiber tripod I bought has been on 50+ shoots and still performs flawlessly.</p>
+                <div class="testimonial-author">
+                    <div class="testimonial-avatar">PS</div>
+                    <div>
+                        <div class="testimonial-name">Priya Sharma</div>
+                        <div class="testimonial-role">Cinematographer · Delhi</div>
+                    </div>
+                </div>
+            </div>
+            <div class="testimonial-card">
+                <div class="testimonial-stars">★★★★★</div>
+                <p class="testimonial-text">The mirrorless camera I ordered arrived perfectly packaged and the price was unbeatable. VisionGear is now my go-to for all gear upgrades.</p>
+                <div class="testimonial-author">
+                    <div class="testimonial-avatar">AM</div>
+                    <div>
+                        <div class="testimonial-name">Arjun Mehta</div>
+                        <div class="testimonial-role">Content Creator · Bangalore</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ── WHY CHOOSE US ── -->
+<section class="section">
+    <div class="container">
+        <div class="section-header">
+            <div class="section-eyebrow">Why VisionGear</div>
+            <h2 class="section-title">Built for Creators</h2>
+            <div class="section-divider"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:2rem;">
+            {% for item in "1234" %}
+            <div style="text-align:center;padding:2rem 1rem;">
+                <div style="width:64px;height:64px;background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.4rem;color:var(--gold);margin:0 auto 1.5rem;">
+                    {% if forloop.counter == 1 %}<i class="fas fa-shield-alt"></i>
+                    {% elif forloop.counter == 2 %}<i class="fas fa-truck"></i>
+                    {% elif forloop.counter == 3 %}<i class="fas fa-headset"></i>
+                    {% else %}<i class="fas fa-undo"></i>{% endif %}
+                </div>
+                <h4 style="font-family:var(--font-display);font-size:1.1rem;color:var(--white);margin-bottom:0.5rem;">
+                    {% if forloop.counter == 1 %}Authentic Gear
+                    {% elif forloop.counter == 2 %}Fast Shipping
+                    {% elif forloop.counter == 3 %}Expert Support
+                    {% else %}Easy Returns{% endif %}
+                </h4>
+                <p style="font-size:0.83rem;color:var(--silver);line-height:1.7;">
+                    {% if forloop.counter == 1 %}100% genuine products from authorised distributors with full warranty.
+                    {% elif forloop.counter == 2 %}Free shipping on orders over ₹5,000. Express delivery available.
+                    {% elif forloop.counter == 3 %}Our team of photographers are ready to help you choose the right gear.
+                    {% else %}30-day hassle-free returns on all unused products.{% endif %}
+                </p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- ── NEWSLETTER ── -->
+<div class="newsletter-section">
+    <div class="container">
+        <div class="section-eyebrow">Stay in Focus</div>
+        <h2 class="section-title">Join the VisionGear Community</h2>
+        <p style="color:var(--silver);font-size:0.9rem;margin-top:0.75rem;">Get exclusive deals, new arrivals, and photography tips delivered to your inbox.</p>
+        <div class="newsletter-form">
+            <input type="email" placeholder="your@email.com">
+            <button class="btn btn-gold">Subscribe</button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Hero carousel
+const slides = document.querySelectorAll('.hero-slide');
+const dots = document.querySelectorAll('.hero-dot');
+let current = 0;
+let autoPlay;
+
+function goTo(index) {
+    slides[current].classList.remove('active');
+    dots[current].classList.remove('active');
+    current = (index + slides.length) % slides.length;
+    slides[current].classList.add('active');
+    dots[current].classList.add('active');
+}
+
+function startAuto() {
+    autoPlay = setInterval(() => goTo(current + 1), 6000);
+}
+
+document.getElementById('heroNext').addEventListener('click', () => { clearInterval(autoPlay); goTo(current + 1); startAuto(); });
+document.getElementById('heroPrev').addEventListener('click', () => { clearInterval(autoPlay); goTo(current - 1); startAuto(); });
+
+dots.forEach(dot => {
+    dot.addEventListener('click', () => { clearInterval(autoPlay); goTo(+dot.dataset.index); startAuto(); });
+});
+
+startAuto();
+
+// Add-to-cart AJAX
+document.querySelectorAll('form[action*="add_to_cart"]').forEach(form => {
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const data = new FormData(this);
+        const res = await fetch(this.action, {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRFToken': getCookie('csrftoken') },
+            body: data,
+        });
+        const json = await res.json();
+        if (json.success) {
+            updateCartBadge(json.cart_count);
+            // Flash button
+            const btn = this.querySelector('button');
+            const orig = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-check"></i> Added!';
+            btn.style.background = 'var(--green)';
+            setTimeout(() => { btn.innerHTML = orig; btn.style.background = ''; }, 1800);
+        }
+    });
+});
+</script>
+{% endblock %}

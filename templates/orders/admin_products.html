@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% block title %}Manage Products — VisionGear{% endblock %}
+{% block content %}
+<div class="container" style="padding-top:2rem;padding-bottom:5rem;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem;flex-wrap:wrap;gap:1rem;">
+        <h1 style="font-family:var(--font-display);font-size:2rem;color:var(--white);">Manage Products</h1>
+        <div style="display:flex;gap:0.75rem;">
+            <a href="/admin/store/product/add/" class="btn btn-gold btn-sm"><i class="fas fa-plus"></i> Add Product</a>
+            <a href="{% url 'orders:admin_dashboard' %}" class="btn btn-ghost btn-sm"><i class="fas fa-chart-bar"></i> Dashboard</a>
+        </div>
+    </div>
+    <div style="background:var(--charcoal);border:1px solid var(--iron);border-radius:var(--radius);overflow:hidden;">
+        <table style="width:100%;border-collapse:collapse;">
+            <thead>
+                <tr style="background:var(--graphite);">
+                    <th style="padding:1rem;text-align:left;font-family:var(--font-mono);font-size:0.65rem;letter-spacing:2px;text-transform:uppercase;color:var(--silver);border-bottom:1px solid var(--iron);">Product</th>
+                    <th style="padding:1rem;text-align:left;font-family:var(--font-mono);font-size:0.65rem;letter-spacing:2px;text-transform:uppercase;color:var(--silver);border-bottom:1px solid var(--iron);">Category</th>
+                    <th style="padding:1rem;text-align:left;font-family:var(--font-mono);font-size:0.65rem;letter-spacing:2px;text-transform:uppercase;color:var(--silver);border-bottom:1px solid var(--iron);">Price</th>
+                    <th style="padding:1rem;text-align:left;font-family:var(--font-mono);font-size:0.65rem;letter-spacing:2px;text-transform:uppercase;color:var(--silver);border-bottom:1px solid var(--iron);">Stock</th>
+                    <th style="padding:1rem;text-align:left;font-family:var(--font-mono);font-size:0.65rem;letter-spacing:2px;text-transform:uppercase;color:var(--silver);border-bottom:1px solid var(--iron);">Status</th>
+                    <th style="padding:1rem;text-align:left;font-family:var(--font-mono);font-size:0.65rem;letter-spacing:2px;text-transform:uppercase;color:var(--silver);border-bottom:1px solid var(--iron);">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for product in products %}
+                <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+                    <td style="padding:1rem;">
+                        <div style="display:flex;align-items:center;gap:0.75rem;">
+                            <div style="width:44px;height:36px;background:var(--graphite);border-radius:var(--radius);display:flex;align-items:center;justify-content:center;font-size:1rem;color:var(--iron);flex-shrink:0;overflow:hidden;">
+                                {% if product.image %}<img src="{{ product.image.url }}" style="width:100%;height:100%;object-fit:cover;">
+                                {% elif product.category.slug == 'cameras' %}<i class="fas fa-camera" style="color:var(--gold);"></i>
+                                {% elif product.category.slug == 'tripods' %}<i class="fas fa-podcast" style="color:var(--gold);"></i>
+                                {% elif product.category.slug == 'lighting' %}<i class="fas fa-lightbulb" style="color:var(--gold);"></i>
+                                {% else %}<i class="fas fa-briefcase" style="color:var(--gold);"></i>{% endif %}
+                            </div>
+                            <div>
+                                <a href="{{ product.get_absolute_url }}" style="color:var(--fog);text-decoration:none;font-size:0.85rem;">{{ product.name }}</a>
+                                {% if product.brand %}<div style="color:var(--silver);font-size:0.72rem;">{{ product.brand }}</div>{% endif %}
+                            </div>
+                        </div>
+                    </td>
+                    <td style="padding:1rem;color:var(--ash);font-size:0.82rem;">{{ product.category.name }}</td>
+                    <td style="padding:1rem;">
+                        <div style="font-family:var(--font-mono);color:var(--gold);font-size:0.85rem;">₹{{ product.effective_price }}</div>
+                        {% if product.discount_price %}<div style="font-size:0.72rem;color:var(--silver);text-decoration:line-through;font-family:var(--font-mono);">₹{{ product.price }}</div>{% endif %}
+                    </td>
+                    <td style="padding:1rem;font-family:var(--font-mono);color:{% if product.stock > 10 %}var(--green){% elif product.stock > 0 %}var(--amber){% else %}var(--red){% endif %};">{{ product.stock }}</td>
+                    <td style="padding:1rem;">
+                        {% if product.is_active %}<span style="background:rgba(39,174,96,0.12);color:var(--green);border:1px solid rgba(39,174,96,0.25);padding:0.2rem 0.6rem;border-radius:20px;font-size:0.65rem;font-family:var(--font-mono);">Active</span>
+                        {% else %}<span style="background:rgba(127,140,141,0.12);color:#95a5a6;border:1px solid rgba(127,140,141,0.25);padding:0.2rem 0.6rem;border-radius:20px;font-size:0.65rem;font-family:var(--font-mono);">Inactive</span>{% endif %}
+                        {% if product.is_featured %}<span style="background:rgba(201,168,76,0.1);color:var(--gold);border:1px solid rgba(201,168,76,0.2);padding:0.2rem 0.6rem;border-radius:20px;font-size:0.65rem;font-family:var(--font-mono);margin-left:0.25rem;">Featured</span>{% endif %}
+                    </td>
+                    <td style="padding:1rem;">
+                        <div style="display:flex;gap:0.5rem;">
+                            <a href="/admin/store/product/{{ product.id }}/change/" class="btn btn-outline btn-sm" style="padding:0.3rem 0.6rem;font-size:0.72rem;"><i class="fas fa-edit"></i> Edit</a>
+                            <a href="{{ product.get_absolute_url }}" class="btn btn-ghost btn-sm" style="padding:0.3rem 0.6rem;font-size:0.72rem;"><i class="fas fa-eye"></i></a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" style="text-align:center;padding:3rem;color:var(--silver);">No products found. <a href="/admin/store/product/add/" style="color:var(--gold);">Add one</a>.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

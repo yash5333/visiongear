@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+
+{% block title %}My Profile — VisionGear{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top:2rem;padding-bottom:5rem;">
+    <div class="page-header">
+        <h1 class="page-title">My Profile</h1>
+    </div>
+    <div style="display:grid;grid-template-columns:280px 1fr;gap:2.5rem;align-items:start;">
+        <!-- Sidebar -->
+        <div style="background:var(--charcoal);border:1px solid var(--iron);border-radius:var(--radius);padding:2rem;text-align:center;">
+            <div style="width:80px;height:80px;background:linear-gradient(135deg,var(--gold-dim),var(--graphite));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2rem;color:var(--gold);margin:0 auto 1rem;">
+                {% if request.user.profile.avatar %}
+                <img src="{{ request.user.profile.avatar.url }}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">
+                {% else %}
+                <i class="fas fa-user"></i>
+                {% endif %}
+            </div>
+            <h3 style="font-family:var(--font-display);font-size:1.3rem;color:var(--white);margin-bottom:0.25rem;">{{ user.get_full_name|default:user.username }}</h3>
+            <p style="color:var(--silver);font-size:0.82rem;">{{ user.email }}</p>
+            <div style="margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid var(--iron);">
+                <a href="{% url 'orders:order_history' %}" class="btn btn-ghost w-full btn-sm" style="margin-bottom:0.5rem;justify-content:flex-start;"><i class="fas fa-box" style="width:16px;"></i> My Orders</a>
+                <a href="{% url 'store:wishlist' %}" class="btn btn-ghost w-full btn-sm" style="margin-bottom:0.5rem;justify-content:flex-start;"><i class="fas fa-heart" style="width:16px;"></i> Wishlist</a>
+                <a href="{% url 'users:change_password' %}" class="btn btn-ghost w-full btn-sm" style="margin-bottom:0.5rem;justify-content:flex-start;"><i class="fas fa-lock" style="width:16px;"></i> Change Password</a>
+                <a href="{% url 'users:logout' %}" class="btn btn-danger w-full btn-sm" style="justify-content:flex-start;"><i class="fas fa-sign-out-alt" style="width:16px;"></i> Logout</a>
+            </div>
+        </div>
+        <!-- Form -->
+        <div>
+            <div style="background:var(--charcoal);border:1px solid var(--iron);border-radius:var(--radius);padding:2rem;margin-bottom:1.5rem;">
+                <h3 style="font-family:var(--font-display);font-size:1.2rem;color:var(--white);margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:1px solid var(--iron);">Personal Information</h3>
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                        <div class="form-group">
+                            <label class="form-label">First Name</label>
+                            {{ u_form.first_name }}
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Last Name</label>
+                            {{ u_form.last_name }}
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Username</label>
+                            {{ u_form.username }}
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Email</label>
+                            {{ u_form.email }}
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Phone</label>
+                            {{ p_form.phone }}
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Profile Photo</label>
+                            {{ p_form.avatar }}
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Bio</label>
+                        {{ p_form.bio }}
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Address</label>
+                        {{ p_form.address }}
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;">
+                        <div class="form-group">
+                            <label class="form-label">City</label>
+                            {{ p_form.city }}
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">State</label>
+                            {{ p_form.state }}
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Pincode</label>
+                            {{ p_form.pincode }}
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-gold"><i class="fas fa-save"></i> Save Changes</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+input[type=text], input[type=email], input[type=tel], textarea, select { width:100%;padding:0.85rem 1rem;background:var(--graphite);border:1px solid var(--iron);border-radius:var(--radius);color:var(--fog);font-family:var(--font-body);font-size:0.9rem;transition:var(--transition);outline:none; }
+input:focus, textarea:focus { border-color:rgba(201,168,76,0.5);background:var(--charcoal); }
+{% endblock %}

@@ -1,0 +1,201 @@
+{% extends 'base.html' %}
+{% load store_tags %}
+
+{% block title %}Shopping Cart — VisionGear{% endblock %}
+
+{% block extra_css %}
+.cart-layout { display: grid; grid-template-columns: 1fr 360px; gap: 2.5rem; align-items: start; }
+.cart-item {
+    display: grid;
+    grid-template-columns: 100px 1fr auto auto;
+    gap: 1.5rem;
+    align-items: center;
+    padding: 1.5rem;
+    background: var(--charcoal);
+    border: 1px solid var(--iron);
+    border-radius: var(--radius);
+    margin-bottom: 1rem;
+    transition: var(--transition);
+}
+.cart-item:hover { border-color: rgba(201,168,76,0.2); }
+.cart-item-img {
+    width: 100px; height: 80px;
+    background: var(--graphite);
+    border-radius: var(--radius);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    color: var(--iron);
+}
+.cart-item-img img { width:100%; height:100%; object-fit:cover; }
+.cart-item-name { font-family:var(--font-display); font-size:1rem; color:var(--white); margin-bottom:0.25rem; }
+.cart-item-meta { font-size:0.78rem; color:var(--silver); }
+.cart-item-price { font-family:var(--font-mono); color:var(--gold); font-size:1rem; white-space:nowrap; }
+.qty-mini { display:flex; align-items:center; border:1px solid var(--iron); border-radius:var(--radius); overflow:hidden; }
+.qty-mini button { width:32px; height:32px; background:var(--graphite); border:none; color:var(--ash); cursor:pointer; font-size:0.9rem; transition:var(--transition); }
+.qty-mini button:hover { background:var(--iron); color:var(--white); }
+.qty-mini input { width:44px; text-align:center; background:transparent; border:none; border-left:1px solid var(--iron); border-right:1px solid var(--iron); color:var(--white); font-size:0.85rem; font-family:var(--font-mono); height:32px; outline:none; }
+.remove-btn { background:none; border:none; color:var(--silver); cursor:pointer; font-size:0.85rem; padding:0.25rem; transition:var(--transition); }
+.remove-btn:hover { color:#e74c3c; }
+
+.order-summary {
+    position: sticky;
+    top: 90px;
+    background: var(--charcoal);
+    border: 1px solid var(--iron);
+    border-radius: var(--radius);
+    padding: 2rem;
+}
+.summary-title { font-family:var(--font-display); font-size:1.3rem; color:var(--white); margin-bottom:1.5rem; padding-bottom:1rem; border-bottom:1px solid var(--iron); }
+.summary-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem; font-size:0.88rem; color:var(--ash); }
+.summary-total { display:flex; justify-content:space-between; align-items:center; font-family:var(--font-display); font-size:1.4rem; color:var(--white); margin-top:1rem; padding-top:1rem; border-top:1px solid var(--iron); }
+.summary-total span:last-child { color:var(--gold); }
+
+.empty-cart { text-align:center; padding:5rem 2rem; }
+.empty-cart-icon { font-size:5rem; color:var(--iron); margin-bottom:2rem; }
+
+@media (max-width:768px) {
+    .cart-layout { grid-template-columns:1fr; }
+    .order-summary { position:static; }
+    .cart-item { grid-template-columns:80px 1fr; }
+    .cart-item-price, .remove-btn { grid-column:2; }
+}
+{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top:2rem;padding-bottom:5rem;">
+    <div class="page-header">
+        <div class="breadcrumb">
+            <a href="{% url 'store:home' %}">Home</a>
+            <span class="breadcrumb-sep">/</span>
+            <span class="breadcrumb-current">Shopping Cart</span>
+        </div>
+        <h1 class="page-title">Shopping Cart
+            {% if cart.items.exists %}<span style="font-size:1rem;color:var(--silver);font-family:var(--font-mono);margin-left:1rem;">({{ cart.item_count }} item{{ cart.item_count|pluralize }})</span>{% endif %}
+        </h1>
+    </div>
+
+    {% if cart.items.exists %}
+    <div class="cart-layout">
+        <!-- ITEMS -->
+        <div id="cartItems">
+            {% for item in cart.items.all %}
+            <div class="cart-item" id="cartItem{{ item.id }}">
+                <div class="cart-item-img" style="position:relative;overflow:hidden;">
+                    {% if item.product.image %}
+                    <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}"
+                         style="width:100%;height:100%;object-fit:cover;display:block;"
+                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                    <div style="display:none;width:100%;height:100%;align-items:center;justify-content:center;font-size:1.5rem;color:rgba(201,168,76,0.5);">
+                        {% if item.product.category.slug == 'cameras' %}<i class="fas fa-camera"></i>{% elif item.product.category.slug == 'tripods' %}<i class="fas fa-podcast"></i>{% elif item.product.category.slug == 'lighting' %}<i class="fas fa-lightbulb"></i>{% else %}<i class="fas fa-briefcase"></i>{% endif %}
+                    </div>
+                    {% else %}
+                    <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:1.5rem;color:rgba(201,168,76,0.5);">
+                        {% if item.product.category.slug == 'cameras' %}<i class="fas fa-camera"></i>{% elif item.product.category.slug == 'tripods' %}<i class="fas fa-podcast"></i>{% elif item.product.category.slug == 'lighting' %}<i class="fas fa-lightbulb"></i>{% else %}<i class="fas fa-briefcase"></i>{% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+                <div>
+                    <div class="cart-item-name">{{ item.product.name }}</div>
+                    <div class="cart-item-meta">{{ item.product.category.name }} {% if item.product.brand %}· {{ item.product.brand }}{% endif %}</div>
+                    <div class="cart-item-meta" style="color:var(--gold);margin-top:0.2rem;">₹{{ item.product.effective_price }} each</div>
+                </div>
+                <div>
+                    <div class="qty-mini">
+                        <button onclick="updateQty({{ item.id }}, -1)">−</button>
+                        <input type="number" value="{{ item.quantity }}" min="1" id="qty{{ item.id }}" onchange="setQty({{ item.id }}, this.value)">
+                        <button onclick="updateQty({{ item.id }}, 1)">+</button>
+                    </div>
+                    <div style="font-size:0.72rem;color:var(--silver);text-align:center;margin-top:0.25rem;font-family:var(--font-mono);" id="sub{{ item.id }}">₹{{ item.subtotal }}</div>
+                </div>
+                <div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.5rem;">
+                    <div class="cart-item-price" id="price{{ item.id }}">₹{{ item.subtotal }}</div>
+                    <form method="post" action="{% url 'store:remove_from_cart' item.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="remove-btn" title="Remove"><i class="fas fa-trash-alt"></i></button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- SUMMARY -->
+        <div class="order-summary">
+            <div class="summary-title">Order Summary</div>
+            <div class="summary-row">
+                <span>Subtotal</span>
+                <span style="color:var(--fog);font-family:var(--font-mono);" id="cartTotal">₹{{ cart.total }}</span>
+            </div>
+            <div class="summary-row">
+                <span>Shipping</span>
+                <span style="color:{% if cart.total >= 5000 %}var(--green){% else %}var(--fog){% endif %};font-family:var(--font-mono);">
+                    {% if cart.total >= 5000 %}Free{% else %}₹199{% endif %}
+                </span>
+            </div>
+            <div class="summary-row">
+                <span>Tax (18% GST)</span>
+                <span style="color:var(--fog);font-family:var(--font-mono);">₹{{ cart.total|floatformat:2 }}</span>
+            </div>
+            <div class="summary-total">
+                <span>Total</span>
+                <span>₹{{ cart.total }}</span>
+            </div>
+            <a href="{% url 'orders:checkout' %}" class="btn btn-gold w-full btn-lg" style="margin-top:1.5rem;">
+                <i class="fas fa-lock"></i> Proceed to Checkout
+            </a>
+            <a href="{% url 'store:product_list' %}" class="btn btn-ghost w-full btn-sm" style="margin-top:0.75rem;">
+                <i class="fas fa-arrow-left"></i> Continue Shopping
+            </a>
+            <div style="display:flex;align-items:center;justify-content:center;gap:1rem;margin-top:1.5rem;padding-top:1rem;border-top:1px solid var(--iron);">
+                <i class="fas fa-lock" style="color:var(--gold);font-size:0.8rem;"></i>
+                <span style="font-size:0.72rem;color:var(--silver);font-family:var(--font-mono);">SECURE CHECKOUT</span>
+                <i class="fas fa-shield-alt" style="color:var(--gold);font-size:0.8rem;"></i>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="empty-cart">
+        <div class="empty-cart-icon"><i class="fas fa-shopping-bag"></i></div>
+        <h2 style="font-family:var(--font-display);font-size:2rem;color:var(--white);margin-bottom:0.75rem;">Your Cart is Empty</h2>
+        <p style="color:var(--silver);margin-bottom:2rem;">Looks like you haven't added any gear yet. Start exploring!</p>
+        <a href="{% url 'store:product_list' %}" class="btn btn-gold btn-lg">
+            <i class="fas fa-camera"></i> Shop Now
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function updateQty(itemId, delta) {
+    const input = document.getElementById('qty' + itemId);
+    let newQty = Math.max(0, parseInt(input.value) + delta);
+    input.value = newQty;
+    await setQty(itemId, newQty);
+}
+
+async function setQty(itemId, qty) {
+    const form = new FormData();
+    form.append('quantity', qty);
+    const res = await fetch(`/cart/update/${itemId}/`, {
+        method: 'POST',
+        headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRFToken': getCookie('csrftoken') },
+        body: form,
+    });
+    const json = await res.json();
+    if (json.success) {
+        if (qty <= 0) {
+            document.getElementById('cartItem' + itemId)?.remove();
+        } else {
+            document.getElementById('price' + itemId).textContent = '₹' + json.item_subtotal.toFixed(2);
+            document.getElementById('sub' + itemId).textContent = '₹' + json.item_subtotal.toFixed(2);
+        }
+        document.getElementById('cartTotal').textContent = '₹' + json.cart_total.toFixed(2);
+        updateCartBadge(json.cart_count);
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+
+{% block title %}Invoice #{{ order.short_id }} — VisionGear{% endblock %}
+
+{% block extra_css %}
+.invoice-wrap { max-width: 760px; margin: 2rem auto; padding: 0 1rem 4rem; }
+.invoice-paper {
+    background: var(--charcoal);
+    border: 1px solid var(--iron);
+    border-radius: var(--radius);
+    padding: 3rem;
+}
+.invoice-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 3rem; padding-bottom: 2rem; border-bottom: 1px solid var(--iron); }
+.invoice-logo-name { font-family: var(--font-display); font-size: 2rem; color: var(--white); }
+.invoice-logo-tag { font-family: var(--font-mono); font-size: 0.65rem; letter-spacing: 3px; color: var(--gold); text-transform: uppercase; }
+.invoice-title { font-family: var(--font-mono); font-size: 1.5rem; letter-spacing: 4px; color: var(--silver); text-transform: uppercase; }
+.invoice-id { font-size: 0.8rem; color: var(--gold); font-family: var(--font-mono); }
+.invoice-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2.5rem; }
+.meta-block-title { font-family: var(--font-mono); font-size: 0.65rem; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); margin-bottom: 0.75rem; }
+.meta-block-body { font-size: 0.85rem; color: var(--ash); line-height: 1.8; }
+table { width: 100%; border-collapse: collapse; margin-bottom: 2rem; }
+thead th { font-family: var(--font-mono); font-size: 0.65rem; letter-spacing: 2px; text-transform: uppercase; color: var(--silver); padding: 0.75rem; border-bottom: 2px solid var(--iron); text-align: left; }
+thead th:last-child { text-align: right; }
+tbody td { padding: 0.85rem 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 0.85rem; color: var(--fog); vertical-align: middle; }
+tbody td:last-child { text-align: right; font-family: var(--font-mono); color: var(--gold); }
+.totals-block { margin-left: auto; max-width: 280px; }
+.total-row { display: flex; justify-content: space-between; padding: 0.5rem 0; font-size: 0.85rem; color: var(--ash); }
+.grand-total { display: flex; justify-content: space-between; padding: 1rem 0; font-family: var(--font-display); font-size: 1.4rem; color: var(--white); border-top: 2px solid var(--iron); margin-top: 0.5rem; }
+.grand-total span:last-child { color: var(--gold); }
+.invoice-footer { text-align: center; margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--iron); font-size: 0.78rem; color: var(--silver); }
+@media print {
+    .navbar, footer, .print-actions { display: none !important; }
+    body { background: white; color: black; }
+    .invoice-paper { border: none; padding: 0; background: white; }
+    .invoice-logo-name, .invoice-title { color: black; }
+    .meta-block-body, tbody td { color: #333; }
+}
+{% endblock %}
+
+{% block content %}
+<div class="invoice-wrap">
+    <div class="print-actions" style="display:flex;gap:1rem;margin-bottom:1.5rem;">
+        <a href="{% url 'orders:order_detail' order.order_id %}" class="btn btn-ghost btn-sm"><i class="fas fa-arrow-left"></i> Back</a>
+        <button onclick="window.print()" class="btn btn-gold btn-sm"><i class="fas fa-print"></i> Print Invoice</button>
+    </div>
+
+    <div class="invoice-paper">
+        <div class="invoice-header">
+            <div>
+                <div class="invoice-logo-name">VisionGear</div>
+                <div class="invoice-logo-tag">Photography & Videography</div>
+                <div style="font-size:0.78rem;color:var(--silver);margin-top:0.5rem;">visiongear@example.com | +91 98765 43210</div>
+            </div>
+            <div style="text-align:right;">
+                <div class="invoice-title">Invoice</div>
+                <div class="invoice-id">#{{ order.short_id }}</div>
+                <div style="font-size:0.78rem;color:var(--silver);margin-top:0.5rem;">{{ order.created_at|date:"F d, Y" }}</div>
+            </div>
+        </div>
+
+        <div class="invoice-meta">
+            <div>
+                <div class="meta-block-title">Bill To</div>
+                <div class="meta-block-body">
+                    <strong style="color:var(--white);">{{ order.full_name }}</strong><br>
+                    {{ order.address }}<br>
+                    {{ order.city }}, {{ order.state }} {{ order.pincode }}<br>
+                    {{ order.country }}<br>
+                    {{ order.email }}<br>
+                    {{ order.phone }}
+                </div>
+            </div>
+            <div>
+                <div class="meta-block-title">Invoice Details</div>
+                <div class="meta-block-body">
+                    <strong style="color:var(--white);">Invoice No:</strong> #{{ order.short_id }}<br>
+                    <strong style="color:var(--white);">Date:</strong> {{ order.created_at|date:"d M Y" }}<br>
+                    <strong style="color:var(--white);">Payment:</strong> {{ order.get_payment_status_display }}<br>
+                    <strong style="color:var(--white);">Method:</strong> {{ order.payment_method|title }}<br>
+                    {% if order.transaction_id %}<strong style="color:var(--white);">TxID:</strong> {{ order.transaction_id }}{% endif %}
+                </div>
+            </div>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th style="width:40px;">#</th>
+                    <th>Item</th>
+                    <th style="text-align:right;">Unit Price</th>
+                    <th style="text-align:right;">Qty</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in order.items.all %}
+                <tr>
+                    <td style="color:var(--silver);">{{ forloop.counter }}</td>
+                    <td>{{ item.product_name }}</td>
+                    <td style="text-align:right;font-family:var(--font-mono);">₹{{ item.product_price }}</td>
+                    <td style="text-align:right;font-family:var(--font-mono);">{{ item.quantity }}</td>
+                    <td>₹{{ item.subtotal }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="totals-block">
+            <div class="total-row"><span>Subtotal</span><span style="font-family:var(--font-mono);">₹{{ order.subtotal }}</span></div>
+            <div class="total-row"><span>Shipping</span><span style="font-family:var(--font-mono);">{% if order.shipping_cost %}₹{{ order.shipping_cost }}{% else %}Free{% endif %}</span></div>
+            <div class="total-row"><span>GST (18%)</span><span style="font-family:var(--font-mono);">₹{{ order.tax }}</span></div>
+            <div class="grand-total"><span>Grand Total</span><span>₹{{ order.total }}</span></div>
+        </div>
+
+        <div class="invoice-footer">
+            <p>Thank you for shopping with VisionGear.</p>
+            <p style="margin-top:0.25rem;">For support: support@visiongear.com | Returns policy: 30 days</p>
+            <div style="margin-top:1rem;font-family:var(--font-mono);font-size:0.65rem;letter-spacing:2px;color:var(--iron);">VISIONGEAR — CAPTURING YOUR VISION</div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,210 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Dashboard — VisionGear{% endblock %}
+
+{% block extra_css %}
+.dashboard-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; margin-bottom: 2.5rem; }
+.stat-card {
+    background: var(--charcoal);
+    border: 1px solid var(--iron);
+    border-radius: var(--radius);
+    padding: 1.75rem;
+    position: relative;
+    overflow: hidden;
+    transition: var(--transition);
+}
+.stat-card:hover { border-color: rgba(201,168,76,0.25); transform: translateY(-3px); }
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; right: 0;
+    width: 80px; height: 80px;
+    border-radius: 0 0 0 80px;
+    opacity: 0.06;
+}
+.stat-card.gold::before { background: var(--gold); }
+.stat-card.blue::before { background: #3498db; }
+.stat-card.green::before { background: var(--green); }
+.stat-card.purple::before { background: #9b59b6; }
+.stat-icon { font-size: 1.5rem; margin-bottom: 1rem; }
+.stat-card.gold .stat-icon { color: var(--gold); }
+.stat-card.blue .stat-icon { color: #3498db; }
+.stat-card.green .stat-icon { color: var(--green); }
+.stat-card.purple .stat-icon { color: #9b59b6; }
+.stat-num { font-family: var(--font-display); font-size: 2rem; color: var(--white); line-height: 1; margin-bottom: 0.25rem; }
+.stat-lbl { font-size: 0.72rem; font-family: var(--font-mono); letter-spacing: 1.5px; text-transform: uppercase; color: var(--silver); }
+.dashboard-2col { display: grid; grid-template-columns: 2fr 1fr; gap: 2rem; }
+.admin-nav { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 2rem; }
+.section-card { background: var(--charcoal); border: 1px solid var(--iron); border-radius: var(--radius); padding: 1.75rem; }
+.section-card-title { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+.mini-table { width: 100%; border-collapse: collapse; }
+.mini-table th { font-size: 0.65rem; font-family: var(--font-mono); letter-spacing: 1.5px; text-transform: uppercase; color: var(--silver); padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--iron); text-align: left; }
+.mini-table td { padding: 0.75rem; font-size: 0.82rem; color: var(--fog); border-bottom: 1px solid rgba(255,255,255,0.04); }
+.mini-table tr:last-child td { border-bottom: none; }
+@media (max-width: 1024px) { .dashboard-grid { grid-template-columns: repeat(2,1fr); } .dashboard-2col { grid-template-columns: 1fr; } }
+@media (max-width: 600px) { .dashboard-grid { grid-template-columns: 1fr 1fr; } }
+{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top:2rem;padding-bottom:5rem;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2rem;flex-wrap:wrap;gap:1rem;">
+        <div>
+            <div style="font-family:var(--font-mono);font-size:0.68rem;letter-spacing:2px;text-transform:uppercase;color:var(--gold);">Staff Access</div>
+            <h1 style="font-family:var(--font-display);font-size:2rem;color:var(--white);">Admin Dashboard</h1>
+        </div>
+        <div style="font-size:0.8rem;color:var(--silver);">Welcome, <strong style="color:var(--gold);">{{ request.user.username }}</strong></div>
+    </div>
+
+    <!-- Quick nav -->
+    <div class="admin-nav">
+        <a href="{% url 'orders:admin_dashboard' %}" class="btn btn-gold btn-sm"><i class="fas fa-chart-bar"></i> Dashboard</a>
+        <a href="{% url 'orders:admin_orders' %}" class="btn btn-ghost btn-sm"><i class="fas fa-box"></i> Orders</a>
+        <a href="{% url 'orders:admin_users' %}" class="btn btn-ghost btn-sm"><i class="fas fa-users"></i> Users</a>
+        <a href="{% url 'orders:admin_products' %}" class="btn btn-ghost btn-sm"><i class="fas fa-camera"></i> Products</a>
+        <a href="/admin/" class="btn btn-outline btn-sm"><i class="fas fa-cog"></i> Django Admin</a>
+    </div>
+
+    <!-- Stats -->
+    <div class="dashboard-grid">
+        <div class="stat-card gold">
+            <div class="stat-icon"><i class="fas fa-rupee-sign"></i></div>
+            <div class="stat-num">₹{{ total_revenue|floatformat:0 }}</div>
+            <div class="stat-lbl">Total Revenue</div>
+        </div>
+        <div class="stat-card blue">
+            <div class="stat-icon"><i class="fas fa-shopping-bag"></i></div>
+            <div class="stat-num">{{ total_orders }}</div>
+            <div class="stat-lbl">Total Orders</div>
+        </div>
+        <div class="stat-card green">
+            <div class="stat-icon"><i class="fas fa-users"></i></div>
+            <div class="stat-num">{{ total_users }}</div>
+            <div class="stat-lbl">Registered Users</div>
+        </div>
+        <div class="stat-card purple">
+            <div class="stat-icon"><i class="fas fa-camera"></i></div>
+            <div class="stat-num">{{ total_products }}</div>
+            <div class="stat-lbl">Products</div>
+        </div>
+    </div>
+
+    <div class="dashboard-2col">
+        <!-- Revenue Chart -->
+        <div class="section-card">
+            <div class="section-card-title">Revenue (Last 6 Months)</div>
+            <canvas id="revenueChart" height="100"></canvas>
+        </div>
+
+        <!-- Quick stats -->
+        <div>
+            <div class="section-card" style="margin-bottom:1.5rem;">
+                <div class="section-card-title">Order Status</div>
+                <div style="display:flex;flex-direction:column;gap:0.75rem;">
+                    {% for status_key, status_label in order.STATUS_CHOICES|default:"" %}{% endfor %}
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <span style="font-size:0.82rem;color:var(--ash);">⏳ Pending</span>
+                        <span style="font-family:var(--font-mono);color:var(--amber);">{{ pending_orders }}</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <span style="font-size:0.82rem;color:var(--ash);">✓ Confirmed</span>
+                        <span style="font-family:var(--font-mono);color:#3498db;">—</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <span style="font-size:0.82rem;color:var(--ash);">📦 Total</span>
+                        <span style="font-family:var(--font-mono);color:var(--gold);">{{ total_orders }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="section-card">
+                <div class="section-card-title">Quick Actions</div>
+                <div style="display:flex;flex-direction:column;gap:0.5rem;">
+                    <a href="/admin/store/product/add/" class="btn btn-gold btn-sm w-full" style="justify-content:flex-start;"><i class="fas fa-plus" style="width:16px;"></i> Add Product</a>
+                    <a href="/admin/store/category/add/" class="btn btn-ghost btn-sm w-full" style="justify-content:flex-start;"><i class="fas fa-tag" style="width:16px;"></i> Add Category</a>
+                    <a href="{% url 'orders:admin_orders' %}" class="btn btn-ghost btn-sm w-full" style="justify-content:flex-start;"><i class="fas fa-list" style="width:16px;"></i> View All Orders</a>
+                    <a href="{% url 'orders:admin_users' %}" class="btn btn-ghost btn-sm w-full" style="justify-content:flex-start;"><i class="fas fa-users" style="width:16px;"></i> Manage Users</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Orders -->
+    <div class="section-card" style="margin-top:2rem;">
+        <div class="section-card-title">
+            Recent Orders
+            <a href="{% url 'orders:admin_orders' %}" style="color:var(--gold);font-size:0.8rem;">View All →</a>
+        </div>
+        <table class="mini-table">
+            <thead>
+                <tr>
+                    <th>Order ID</th>
+                    <th>Customer</th>
+                    <th>Items</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in recent_orders %}
+                <tr>
+                    <td><a href="{% url 'orders:order_detail' order.order_id %}" style="color:var(--gold);text-decoration:none;font-family:var(--font-mono);">#{{ order.short_id }}</a></td>
+                    <td>{{ order.full_name }}</td>
+                    <td>{{ order.items.count }}</td>
+                    <td style="font-family:var(--font-mono);color:var(--gold);">₹{{ order.total }}</td>
+                    <td><span class="status-chip status-{{ order.status }}" style="font-size:0.65rem;padding:0.2rem 0.6rem;">{{ order.get_status_display }}</span></td>
+                    <td style="color:var(--silver);">{{ order.created_at|date:"M d, Y" }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" style="text-align:center;color:var(--silver);padding:2rem;">No orders yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}{{ block.super }}
+.status-chip { display:inline-flex;align-items:center;padding:0.3rem 0.75rem;border-radius:20px;font-family:var(--font-mono);letter-spacing:1px;text-transform:uppercase;font-weight:600; }
+.status-pending { background:rgba(232,160,32,0.12);color:var(--amber);border:1px solid rgba(232,160,32,0.25); }
+.status-confirmed { background:rgba(52,152,219,0.12);color:#3498db;border:1px solid rgba(52,152,219,0.25); }
+.status-processing { background:rgba(155,89,182,0.12);color:#9b59b6;border:1px solid rgba(155,89,182,0.25); }
+.status-shipped { background:rgba(26,188,156,0.12);color:#1abc9c;border:1px solid rgba(26,188,156,0.25); }
+.status-delivered { background:rgba(39,174,96,0.12);color:var(--green);border:1px solid rgba(39,174,96,0.25); }
+.status-cancelled { background:rgba(192,57,43,0.12);color:#e74c3c;border:1px solid rgba(192,57,43,0.25); }
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+const ctx = document.getElementById('revenueChart').getContext('2d');
+new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels: {{ months|safe }},
+        datasets: [{
+            label: 'Revenue (₹)',
+            data: {{ revenue_data|safe }},
+            backgroundColor: 'rgba(201,168,76,0.2)',
+            borderColor: 'rgba(201,168,76,0.8)',
+            borderWidth: 2,
+            borderRadius: 4,
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { display: false },
+            tooltip: {
+                callbacks: {
+                    label: ctx => '₹' + ctx.raw.toLocaleString()
+                }
+            }
+        },
+        scales: {
+            x: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#8a8a8a', font: { family: 'Space Mono', size: 10 } } },
+            y: { grid: { color: 'rgba(255,255,255,0.04)' }, ticks: { color: '#8a8a8a', font: { family: 'Space Mono', size: 10 }, callback: v => '₹' + v.toLocaleString() } }
+        }
+    }
+});
+</script>
+{% endblock %}

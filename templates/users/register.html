@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block title %}Join VisionGear{% endblock %}
+
+{% block extra_css %}
+.auth-wrap {
+    min-height: calc(100vh - 70px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 1rem;
+    background: radial-gradient(ellipse at 50% 0%, rgba(201,168,76,0.04) 0%, transparent 60%);
+}
+.auth-card {
+    width: 100%;
+    max-width: 500px;
+    background: var(--charcoal);
+    border: 1px solid rgba(201,168,76,0.15);
+    border-radius: var(--radius);
+    padding: 2.5rem;
+}
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+{% endblock %}
+
+{% block content %}
+<div class="auth-wrap">
+    <div class="auth-card">
+        <div style="text-align:center;margin-bottom:2rem;">
+            <i class="fas fa-camera" style="font-size:2.5rem;color:var(--gold);"></i>
+        </div>
+        <h1 style="font-family:var(--font-display);font-size:2rem;color:var(--white);text-align:center;margin-bottom:0.5rem;">Join VisionGear</h1>
+        <p style="text-align:center;color:var(--silver);font-size:0.85rem;margin-bottom:2rem;">Create your account and start shopping</p>
+
+        <form method="post">
+            {% csrf_token %}
+            {% if form.errors %}
+            <div class="alert alert-error" style="margin-bottom:1rem;">
+                <i class="fas fa-exclamation-circle"></i>
+                <span>Please fix the errors below.</span>
+            </div>
+            {% endif %}
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">First Name</label>
+                    <input type="text" name="first_name" class="form-control" value="{{ form.first_name.value|default:'' }}" placeholder="First name" required>
+                    {% if form.first_name.errors %}<div class="form-error">{{ form.first_name.errors.0 }}</div>{% endif %}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Last Name</label>
+                    <input type="text" name="last_name" class="form-control" value="{{ form.last_name.value|default:'' }}" placeholder="Last name" required>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Username</label>
+                <input type="text" name="username" class="form-control" value="{{ form.username.value|default:'' }}" placeholder="Choose a username" required>
+                {% if form.username.errors %}<div class="form-error">{{ form.username.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="form-group">
+                <label class="form-label">Email Address</label>
+                <input type="email" name="email" class="form-control" value="{{ form.email.value|default:'' }}" placeholder="your@email.com" required>
+                {% if form.email.errors %}<div class="form-error">{{ form.email.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" name="password1" class="form-control" placeholder="Create password" required>
+                    {% if form.password1.errors %}<div class="form-error">{{ form.password1.errors.0 }}</div>{% endif %}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Confirm Password</label>
+                    <input type="password" name="password2" class="form-control" placeholder="Repeat password" required>
+                    {% if form.password2.errors %}<div class="form-error">{{ form.password2.errors.0 }}</div>{% endif %}
+                </div>
+            </div>
+            <button type="submit" class="btn btn-gold w-full btn-lg">
+                <i class="fas fa-user-plus"></i> Create Account
+            </button>
+        </form>
+
+        <div style="text-align:center;margin-top:1.5rem;color:var(--silver);font-size:0.85rem;">
+            Already have an account? <a href="{% url 'users:login' %}" style="color:var(--gold);">Sign In</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
